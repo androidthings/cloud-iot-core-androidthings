@@ -1,0 +1,25 @@
+.DS_Store
+/captures
+
+# Build application files
+*.apk
+*.ap_
+
+# Files for the dex VM
+*.dex
+
+# Java class files
+*.class
+
+# Android Studio
+.idea/
+.gradle
+local.properties
+build/
+*.iml
+*.iws
+*.ipr
+*.swp
+
+# Test app
+app/
