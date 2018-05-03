@@ -22,14 +22,14 @@ import android.text.TextUtils;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-/** Message containing telemetry event data to publish to Cloud IoT Core. */
+/** Represents a telemetry event to publish to Cloud IoT Core. */
 public class TelemetryEvent {
 
     private final String mTopicSubpath;
     private final byte[] mData;
     private final @Qos int mQos;
 
-    /** Quality of service opitons. */
+    /** Quality of service options. */
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({QOS_AT_MOST_ONCE, QOS_AT_LEAST_ONCE})
     public @interface Qos {}

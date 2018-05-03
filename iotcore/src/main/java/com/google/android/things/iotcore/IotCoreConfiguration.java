@@ -152,7 +152,7 @@ public class IotCoreConfiguration {
         }
 
         /**
-         * The key pair used to register this device with Cloud IoT Core.
+         * Set the key pair used to register this device with Cloud IoT Core.
          *
          * <p>Supports RSA and EC key algorithms. See the Cloud IoT Core <a
          * href="https://cloud.google.com/iot/docs/concepts/device-security#security_standards">
