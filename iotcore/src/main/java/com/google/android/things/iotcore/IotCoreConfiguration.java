@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit;
  * defaults, but users can control these settings using
  * {@link IotCoreConfiguration.Builder#setBridgeHostname(String)},
  * {@link IotCoreConfiguration.Builder#setBridgePort(int)}, and
- * {@link IotCoreConfiguration.Builder#setAuthTokenLifetime(long)}.
+ * {@link IotCoreConfiguration.Builder#setAuthTokenLifetime(long, TimeUnit)}.
  */
 public class IotCoreConfiguration {
     private static final String DEFAULT_BRIDGE_HOSTNAME = "mqtt.googleapis.com";
