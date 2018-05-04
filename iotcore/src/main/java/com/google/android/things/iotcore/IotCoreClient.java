@@ -40,6 +40,7 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.jose4j.lang.JoseException;
 
 import javax.net.ssl.SSLException;
 
@@ -493,9 +494,13 @@ public class IotCoreClient {
                 // Error isn't recoverable. I.e. the error has to do with the way the client is
                 // configured. Stop the thread to avoid spamming GCP.
                 mRunBackgroundThread.set(false);
-                Log.d(TAG, "Reconnect loop unrecoverable error");
+                Log.d(TAG, "Reconnect loop unrecoverable error", mqttException);
             }
             onDisconnect(getDisconnectionReason(mqttException));
+        } catch (JoseException joseException) {
+            // Error signing the JWT. Not a retryable error.
+            mRunBackgroundThread.set(false);
+            Log.d(TAG, "Reconnect loop unrecoverable error", joseException);
         }
     }
 
@@ -662,7 +667,7 @@ public class IotCoreClient {
     }
 
     // Blocking
-    private void connectMqttClient() throws MqttException {
+    private void connectMqttClient() throws JoseException, MqttException {
         if (mMqttClient.isConnected()) {
             return;
         }
@@ -673,7 +678,7 @@ public class IotCoreClient {
         onConnection();
     }
 
-    private MqttConnectOptions configureConnectionOptions() {
+    private MqttConnectOptions configureConnectionOptions() throws JoseException {
         MqttConnectOptions options = new MqttConnectOptions();
 
         // Note that the Cloud IoT only supports MQTT 3.1.1, and Paho requires that we
