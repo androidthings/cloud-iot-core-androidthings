@@ -1,0 +1,88 @@
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'maven-publish'
+
+version '1.0.0'
+
+publishing {
+    publications {
+        Production(MavenPublication) {
+            artifact("$buildDir/outputs/aar/iotcore-release.aar")
+            groupId 'com.google.android.things'
+            artifactId 'iotcore'
+            version this.version
+
+            pom.withXml {
+                def dependenciesNode = asNode().appendNode('dependencies')
+                configurations.implementation.allDependencies.each {
+                    if (it.name != "unspecified") {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        dependencyNode.appendNode('groupId', it.group)
+                        dependencyNode.appendNode('artifactId', it.name)
+                        dependencyNode.appendNode('version', it.version)
+                    }
+                }
+            }
+        }
+    }
+}
+
+bintray {
+    user = System.getenv('BINTRAY_USER')
+    key = System.getenv('BINTRAY_API_KEY')
+    configurations = ['archives']
+    pkg {
+        repo = 'androidthings'
+        name = 'cloud-iot-core'
+        userOrg = 'google'
+        licenses = ['Apache-2.0']
+        desc = 'Android Things client library for Google Cloud IoT Core.'
+        publicDownloadNumbers = false
+    }
+}
+
+install {
+    repositories.mavenInstaller {
+        pom.project {
+            name 'cloud-iot-core'
+            description 'Android Things client library for Google Cloud IoT Core.'
+            packaging 'aar'
+            developers {
+                developer {
+                    name 'google'
+                }
+            }
+        }
+    }
+}
+
+// Source jar
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.source
+    classifier = 'sources'
+}
+
+// Javadoc jar
+task javadoc(type: Javadoc) {
+    source = android.sourceSets.main.java.source
+    ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+    classpath += (project.files(android.getBootClasspath().join(File.pathSeparator))
+            + files(ext.androidJar))
+    options.links("https://developer.android.com/reference/");
+    failOnError false
+}
+afterEvaluate {
+    javadoc.classpath += files(android.libraryVariants.collect
+            { variant ->
+                variant.javaCompile.classpath.files
+            })
+}
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+}
