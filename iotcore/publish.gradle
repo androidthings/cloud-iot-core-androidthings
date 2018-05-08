@@ -9,7 +9,7 @@ publishing {
         Production(MavenPublication) {
             artifact("$buildDir/outputs/aar/iotcore-release.aar")
             groupId 'com.google.android.things'
-            artifactId 'iotcore'
+            artifactId 'cloud-iot-core'
             version this.version
 
             pom.withXml {
