@@ -62,7 +62,9 @@ public class JwtGeneratorTest {
     private static KeyPair generateKeyPair(String algorithm) {
         try {
             if (algorithm.equals("EC")) {
-                return KeyPairGenerator.getInstance(algorithm).generateKeyPair();
+                KeyPairGenerator generator = KeyPairGenerator.getInstance(algorithm);
+                generator.initialize(256);
+                return generator.generateKeyPair();
             }
 
             KeyPairGenerator generator = KeyPairGenerator.getInstance(algorithm);
