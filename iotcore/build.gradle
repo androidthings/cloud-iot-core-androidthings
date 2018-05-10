@@ -50,8 +50,7 @@ dependencies {
         exclude group: 'com.google.android', module: 'support-v4'
     }
 
-    // Helpers
-    implementation 'commons-io:commons-io:2.5'
+    // JWT
     implementation 'org.bitbucket.b_c:jose4j:0.6.3'
 }
 
