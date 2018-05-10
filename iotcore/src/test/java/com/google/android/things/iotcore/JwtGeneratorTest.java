@@ -18,6 +18,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 
+import org.jose4j.lang.JoseException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -60,7 +61,13 @@ public class JwtGeneratorTest {
     // Generate key pairs for testing
     private static KeyPair generateKeyPair(String algorithm) {
         try {
-            return KeyPairGenerator.getInstance(algorithm).generateKeyPair();
+            if (algorithm.equals("EC")) {
+                return KeyPairGenerator.getInstance(algorithm).generateKeyPair();
+            }
+
+            KeyPairGenerator generator = KeyPairGenerator.getInstance(algorithm);
+            generator.initialize(2048);
+            return generator.generateKeyPair();
         } catch (NoSuchAlgorithmException e) {
             fail("Error generating test keypair");
         }
@@ -126,8 +133,7 @@ public class JwtGeneratorTest {
      * href="https://cloud.google.com/iot/docs/how-tos/credentials/jwts#jwt_composition">spec</a>.
      */
     @Test
-    public void testCreateJwtRsa()
-            throws UnsupportedJwtException, MalformedJwtException, SignatureException {
+    public void testCreateJwtRsa() throws JoseException {
         JwtGenerator jwtGenerator =
                 new JwtGenerator(RSA_KEY_PAIR, JWT_AUDIENCE, TOKEN_LIFETIME, TEST_CLOCK);
         String rawJwt = jwtGenerator.createJwt();
@@ -161,7 +167,7 @@ public class JwtGeneratorTest {
      * href="https://cloud.google.com/iot/docs/how-tos/credentials/jwts#jwt_composition">spec</a>.
      */
     @Test
-    public void testCreateJwtEc() {
+    public void testCreateJwtEc() throws JoseException {
         JwtGenerator jwtGenerator =
                 new JwtGenerator(EC_KEY_PAIR, JWT_AUDIENCE, TOKEN_LIFETIME, TEST_CLOCK);
         String rawJwt = jwtGenerator.createJwt();

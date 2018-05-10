@@ -35,6 +35,7 @@ import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.jose4j.lang.JoseException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -85,7 +86,7 @@ public class IotCoreClientTest {
     private MqttCallback mClientMqttCallback;
 
     @Before
-    public void setUp() {
+    public void setUp() throws JoseException {
         mClientConnectionStateSpy = spy(new AtomicBoolean(false));
         mRunBackgroundThreadSpy = spy(new AtomicBoolean(false));
         mUnsentDeviceStateSpy = spy(new AtomicReference<byte[]>());
@@ -128,7 +129,7 @@ public class IotCoreClientTest {
         when(mMockIotCoreConfiguration.getAuthTokenLifetimeMillis()).thenReturn(0L);
     }
 
-    private void setUpWithSerialExecutor() {
+    private void setUpWithSerialExecutor() throws JoseException {
         reset(mMockMqttClient);
         SerialExecutor serialExecutor = new SerialExecutor();
         mTestIotCoreClient = new IotCoreClient(
@@ -297,7 +298,7 @@ public class IotCoreClientTest {
     }
 
     @Test
-    public void testOnDisconnectCallbackInvokedNetoworkDownSerialExecutor() {
+    public void testOnDisconnectCallbackInvokedNetoworkDownSerialExecutor() throws JoseException {
         setUpWithSerialExecutor();
         Throwable mockThrowable = mock(Throwable.class);
         when(mockThrowable.getCause()).thenReturn(new SSLException("Fake disconnect"));
@@ -320,7 +321,7 @@ public class IotCoreClientTest {
     }
 
     @Test
-    public void testOnDisconnectCallbackInvokedClientClosedSerialExecutor() {
+    public void testOnDisconnectCallbackInvokedClientClosedSerialExecutor() throws JoseException {
         setUpWithSerialExecutor();
         Throwable mockThrowable = mock(Throwable.class);
         when(mockThrowable.getCause()).thenReturn(new EOFException("Fake disconnect"));
@@ -343,7 +344,7 @@ public class IotCoreClientTest {
     }
 
     @Test
-    public void testOnDisconnectCallbackInvokedOtherErrorSerialExecutor() {
+    public void testOnDisconnectCallbackInvokedOtherErrorSerialExecutor() throws JoseException {
         setUpWithSerialExecutor();
         Throwable mockThrowable = mock(Throwable.class);
         when(mockThrowable.getCause()).thenReturn(new Exception("Fake disconnect"));
@@ -512,7 +513,7 @@ public class IotCoreClientTest {
     }
 
     @Test
-    public void testClientNotifiedOnUnrecoverableError() throws MqttException {
+    public void testClientNotifiedOnUnrecoverableError() throws JoseException, MqttException {
         setUpWithSerialExecutor();
         doThrow(new MqttException(MqttException.REASON_CODE_NOT_AUTHORIZED))
                 .when(mMockMqttClient)

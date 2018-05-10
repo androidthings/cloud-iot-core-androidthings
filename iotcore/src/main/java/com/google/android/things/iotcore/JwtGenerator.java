@@ -17,15 +17,17 @@ package com.google.android.things.iotcore;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
+import org.jose4j.jws.AlgorithmIdentifiers;
+import org.jose4j.jws.JsonWebSignature;
+import org.jose4j.jwt.JwtClaims;
+import org.jose4j.jwt.NumericDate;
+import org.jose4j.lang.JoseException;
+
 import java.security.KeyPair;
-import java.security.PrivateKey;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Date;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 
 /**
  * This class wraps the storage and access of the authentication key used for Cloud IoT. One of the
@@ -34,10 +36,10 @@ import io.jsonwebtoken.SignatureAlgorithm;
 class JwtGenerator {
     private static final String RSA_ALGORITHM = "RSA";
     private static final String EC_ALGORITHM = "EC";
-    private final PrivateKey mPrivateKey;
-    private final String mAudience;
     private final Duration mTokenLifetime;
     private final Clock mClock;
+    private final JsonWebSignature mJws;
+    private final JwtClaims mClaims;
 
     /**
      * Create a JwtGenerator instance.
@@ -75,10 +77,18 @@ class JwtGenerator {
             throw new IllegalArgumentException("Keys use unsupported algorithm.");
         }
 
-        mPrivateKey = keyPair.getPrivate();
-        mAudience = jwtAudience;
         mTokenLifetime = tokenLifetime;
         mClock = clock;
+
+        mJws = new JsonWebSignature();
+        mJws.setAlgorithmHeaderValue(algorithm.equals("RSA")
+                ? AlgorithmIdentifiers.RSA_USING_SHA256
+                : AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256);
+        mJws.setHeader("typ", "JWT");
+        mJws.setKey(keyPair.getPrivate());
+
+        mClaims = new JwtClaims();
+        mClaims.setAudience(jwtAudience);
     }
 
     /**
@@ -86,17 +96,14 @@ class JwtGenerator {
      *
      * @return JWT for project
      */
-    String createJwt() {
+    String createJwt() throws JoseException {
         Instant now = mClock.instant();
-        SignatureAlgorithm signatureAlgorithm = mPrivateKey.getAlgorithm().equals("RSA") ?
-                SignatureAlgorithm.RS256 : SignatureAlgorithm.ES256;
-        return Jwts.builder()
-                .setHeaderParam("typ", "JWT")
-                .setHeaderParam("alg", signatureAlgorithm.getValue())
-                .setAudience(mAudience)
-                .setIssuedAt(new Date(now.toEpochMilli()))
-                .setExpiration(new Date(now.plus(mTokenLifetime).toEpochMilli()))
-                .signWith(signatureAlgorithm, mPrivateKey)
-                .compact();
+
+        mClaims.setIssuedAt(NumericDate.fromMilliseconds(now.toEpochMilli()));
+        mClaims.setExpirationTime(
+                NumericDate.fromMilliseconds(now.plus(mTokenLifetime).toEpochMilli()));
+
+        mJws.setPayload(mClaims.toJson());
+        return mJws.getCompactSerialization();
     }
 }
