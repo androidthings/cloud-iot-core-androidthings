@@ -363,7 +363,7 @@ public class IotCoreConfiguration {
         return mBridgePort;
     }
 
-    /** Return the MQTT broker URL formatted as "ssl://<hostname>:<port>". */
+    /** Return the MQTT broker URL formatted as "ssl://&lt;hostname&gt;:&lt;port&gt;". */
     public String getBrokerUrl() {
         return mBrokerUrl;
     }
