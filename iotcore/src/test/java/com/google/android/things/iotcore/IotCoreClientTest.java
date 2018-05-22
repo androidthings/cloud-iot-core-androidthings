@@ -73,6 +73,8 @@ public class IotCoreClientTest {
     private final Semaphore mMockSemaphore = mock(Semaphore.class);
     private final BoundedExponentialBackoff mMockBackoff = mock(BoundedExponentialBackoff.class);
     private final TelemetryEvent mMockTelemetryEvent = mock(TelemetryEvent.class);
+    private final PrivateKey mMockPrivateKey = mock(PrivateKey.class);
+    private final PublicKey mMockPublicKey = mock(PublicKey.class);
 
     @SuppressWarnings("unchecked")
     private final Queue<TelemetryEvent> mMockTelemetryQueue = mock(Queue.class);
@@ -81,6 +83,9 @@ public class IotCoreClientTest {
     private AtomicBoolean mClientConnectionStateSpy;
     private AtomicBoolean mRunBackgroundThreadSpy;
     private AtomicReference<byte[]> mUnsentDeviceStateSpy;
+
+    // Can't mock KeyPair
+    private final KeyPair mKeyPair = new KeyPair(mMockPublicKey, mMockPrivateKey);
 
     private IotCoreClient mTestIotCoreClient;
     private MqttCallback mClientMqttCallback;
@@ -110,6 +115,10 @@ public class IotCoreClientTest {
         ArgumentCaptor<MqttCallback> argument = ArgumentCaptor.forClass(MqttCallback.class);
         verify(mMockMqttClient).setCallback(argument.capture());
         mClientMqttCallback = argument.getValue();
+
+        // KeyPair mocks
+        when(mMockPrivateKey.getAlgorithm()).thenReturn("RSA");
+        when(mMockPublicKey.getAlgorithm()).thenReturn("RSA");
 
         // JwtGenerator mock
         when(mMockJwtGenerator.createJwt()).thenReturn("JWT");
@@ -172,6 +181,8 @@ public class IotCoreClientTest {
         reset(mMockTelemetryEvent);
         reset(mMockTelemetryQueue);
         reset(mClientConnectionStateSpy);
+        reset(mMockPrivateKey);
+        reset(mMockPublicKey);
     }
 
     private class SerialExecutor implements Executor {
@@ -420,17 +431,10 @@ public class IotCoreClientTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testBuilderAllParameters() {
-        PrivateKey mockPrivateKey = mock(PrivateKey.class);
-        PublicKey mockPublicKey = mock(PublicKey.class);
-        KeyPair keyPair = new KeyPair(mockPublicKey, mockPrivateKey);
-
-        when(mMockIotCoreConfiguration.getKeyPair()).thenReturn(keyPair);
-        when(mockPrivateKey.getAlgorithm()).thenReturn("RSA");
-        when(mockPublicKey.getAlgorithm()).thenReturn("RSA");
-
         // Throws exception on error
         new IotCoreClient.Builder()
                 .setIotCoreConfiguration(mMockIotCoreConfiguration)
+                .setKeyPair(mKeyPair)
                 .setTelemetryQueue(mMockTelemetryQueue)
                 .setConnectionCallback(mMockConnectionCallbackExecutor, mMockConnectionCallback)
                 .setOnConfigurationListener(mMockOnConfigurationExecutor,
@@ -440,25 +444,19 @@ public class IotCoreClientTest {
 
     @Test
     public void testBuilderRequiredParameters() {
-        PrivateKey mockPrivateKey = mock(PrivateKey.class);
-        PublicKey mockPublicKey = mock(PublicKey.class);
-        KeyPair keyPair = new KeyPair(mockPublicKey, mockPrivateKey);
-
-        when(mMockIotCoreConfiguration.getKeyPair()).thenReturn(keyPair);
-        when(mockPrivateKey.getAlgorithm()).thenReturn("RSA");
-        when(mockPublicKey.getAlgorithm()).thenReturn("RSA");
-
         // Throws exception on error
         new IotCoreClient.Builder()
                 .setIotCoreConfiguration(mMockIotCoreConfiguration)
+                .setKeyPair(mKeyPair)
                 .build();
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testBuilderFailsWithoutRequiredParameters() {
+    public void testBuilderFailsWithoutIotCoreConfiguration() {
         try {
             new IotCoreClient.Builder()
+                    .setKeyPair(mKeyPair)
                     .setTelemetryQueue(mMockTelemetryQueue)
                     .setOnConfigurationListener(mMockOnConfigurationListener)
                     .setConnectionCallback(mMockConnectionCallback)
@@ -470,18 +468,27 @@ public class IotCoreClientTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    public void testBuilderFailsWithoutKeyPair() {
+        try {
+            new IotCoreClient.Builder()
+                    .setIotCoreConfiguration(mMockIotCoreConfiguration)
+                    .setTelemetryQueue(mMockTelemetryQueue)
+                    .setOnConfigurationListener(mMockOnConfigurationListener)
+                    .setConnectionCallback(mMockConnectionCallback)
+                    .build();
+            fail("Built IotCoreClient without a key pair");
+        } catch (NullPointerException expected) {
+            // Success
+        }
+    }
+
+    @Test
     public void testBuilderDefaultExecutors() {
-        PrivateKey mockPrivateKey = mock(PrivateKey.class);
-        PublicKey mockPublicKey = mock(PublicKey.class);
-        KeyPair keyPair = new KeyPair(mockPublicKey, mockPrivateKey);
-
-        when(mMockIotCoreConfiguration.getKeyPair()).thenReturn(keyPair);
-        when(mockPrivateKey.getAlgorithm()).thenReturn("RSA");
-        when(mockPublicKey.getAlgorithm()).thenReturn("RSA");
-
         // Throws exception on error
         new IotCoreClient.Builder()
                 .setIotCoreConfiguration(mMockIotCoreConfiguration)
+                .setKeyPair(mKeyPair)
                 .setConnectionCallback(mMockConnectionCallback)
                 .setOnConfigurationListener(mMockOnConfigurationListener)
                 .build();
@@ -530,7 +537,6 @@ public class IotCoreClientTest {
                 .setProjectId("project")
                 .setRegistry("registry", "region")
                 .setDeviceId("device")
-                .setKeyPair(new KeyPair(mock(PublicKey.class), mock(PrivateKey.class)))
                 .build();
         TelemetryEvent telemetryMessage =
                 new TelemetryEvent(new byte[1], "abc", TelemetryEvent.QOS_AT_LEAST_ONCE);

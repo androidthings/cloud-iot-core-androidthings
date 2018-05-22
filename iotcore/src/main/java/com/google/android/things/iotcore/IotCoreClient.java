@@ -24,6 +24,7 @@ import android.util.Log;
 import java.io.EOFException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.security.KeyPair;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Queue;
@@ -74,6 +75,7 @@ import javax.net.ssl.SSLException;
  * <pre class="prettyprint">
  *     IotCoreClient iotCoreClient = new IotCoreClient.Builder()
  *             .setIotCoreConfiguration(configuration)
+ *             .setKeyPair(keyPair);
  *             .setOnConfigurationListener(onConfigurationListener)
  *             .setConnectionCallback(connectionCallback)
  *             .build();
@@ -155,6 +157,7 @@ public class IotCoreClient {
     /** IotCoreClient constructor used by the Builder. */
     private IotCoreClient(
             @NonNull IotCoreConfiguration iotCoreConfiguration,
+            @NonNull KeyPair keyPair,
             @NonNull MqttClient mqttClient,
             @NonNull Queue<TelemetryEvent> telemetryQueue,
             @Nullable Executor connectionCallbackExecutor,
@@ -165,7 +168,7 @@ public class IotCoreClient {
                 iotCoreConfiguration,
                 mqttClient,
                 new JwtGenerator(
-                        iotCoreConfiguration.getKeyPair(),
+                        keyPair,
                         iotCoreConfiguration.getProjectId(),
                         Duration.ofMillis(iotCoreConfiguration.getAuthTokenLifetimeMillis())),
                 new AtomicBoolean(false),
@@ -234,6 +237,7 @@ public class IotCoreClient {
     /** Constructs IotCoreClient instances. */
     public static class Builder {
         private IotCoreConfiguration mIotCoreConfiguration;
+        private KeyPair mKeyPair;
         private Queue<TelemetryEvent> mTelemetryQueue;
         private Executor mOnConfigurationExecutor;
         private OnConfigurationListener mOnConfigurationListener;
@@ -251,6 +255,23 @@ public class IotCoreClient {
                 @NonNull IotCoreConfiguration configuration) {
             checkNotNull(configuration, "Iot Core configuration");
             mIotCoreConfiguration = configuration;
+            return this;
+        }
+
+        /**
+         * Set the key pair used to register this device with Cloud IoT Core.
+         *
+         * <p>Supports RSA and EC key algorithms. See the Cloud IoT Core <a
+         * href="https://cloud.google.com/iot/docs/concepts/device-security#security_standards">
+         * security documentation</a> for more information.
+         *
+         * <p>This parameter is required.
+         *
+         * @param keyPair the key pair used to register the device in this configuration
+         */
+        public Builder setKeyPair(@NonNull KeyPair keyPair) {
+            checkNotNull(keyPair, "Key pair");
+            mKeyPair = keyPair;
             return this;
         }
 
@@ -361,6 +382,7 @@ public class IotCoreClient {
          */
         public IotCoreClient build() {
             checkNotNull(mIotCoreConfiguration, "IotCoreConfiguration");
+            checkNotNull(mKeyPair, "KeyPair");
             if (mTelemetryQueue == null) {
                 mTelemetryQueue =
                         new CapacityQueue<>(DEFAULT_QUEUE_CAPACITY, CapacityQueue.DROP_POLICY_TAIL);
@@ -401,6 +423,7 @@ public class IotCoreClient {
 
             return new IotCoreClient(
                     mIotCoreConfiguration,
+                    mKeyPair,
                     mqttClient,
                     mTelemetryQueue,
                     mConnectionCallbackExecutor,

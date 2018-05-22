@@ -17,22 +17,18 @@ package com.google.android.things.iotcore;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
-import java.security.KeyPair;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Stores information necessary to connect a single device to Google Cloud IoT Core: the device's
  * <a href="https://cloud.google.com/iot/docs/how-tos/mqtt-bridge#device_authentication">client ID
- * </a>, the key pair used to register the device, and some MQTT configuration settings.
+ * </a> and some MQTT configuration settings.
  *
  * <p>Specifying the device's client ID requires the full specification for the Cloud IoT Core
  * registry in which the device is registered, which includes the device's Google Cloud project ID,
  * the device's Cloud IoT Core registry ID, the registry's cloud region, and the device's ID within
  * the registry. These parameters are set in the {@link IotCoreConfiguration.Builder}.
- *
- * <p>The authentication keys used to register the device in the Cloud IoT Core registry are also
- * required. They can be set using {@link IotCoreConfiguration.Builder#setKeyPair(KeyPair)}.
  *
  * <p>MQTT configuration settings are not required since IotCoreConfiguration can use sensible
  * defaults, but users can control these settings using
@@ -64,9 +60,6 @@ public class IotCoreConfiguration {
     // MQTT bridge port.
     private final int mBridgePort;
 
-    // Key pair used to register the device with Cloud IoT Core.
-    private final KeyPair mKeyPair;
-
     // The duration that JWT authentication tokens for connecting to Cloud IoT Core should
     // be valid.
     private final long mAuthTokenLifetimeMillis;
@@ -92,7 +85,6 @@ public class IotCoreConfiguration {
         private String mRegistryId;
         private String mDeviceId;
         private String mCloudRegion;
-        private KeyPair mKeyPair;
         private String mBridgeHostname = DEFAULT_BRIDGE_HOSTNAME;
         private int mBridgePort = DEFAULT_BRIDGE_PORT;
         private long mAuthTokenLifetimeMillis = DEFAULT_AUTH_TOKEN_LIFETIME_MILLIS;
@@ -152,26 +144,6 @@ public class IotCoreConfiguration {
         }
 
         /**
-         * Set the key pair used to register this device with Cloud IoT Core.
-         *
-         * <p>Supports RSA and EC key algorithms. See the Cloud IoT Core <a
-         * href="https://cloud.google.com/iot/docs/concepts/device-security#security_standards">
-         * security documentation</a> for more information.
-         *
-         * <p>This parameter is required.
-         *
-         * @param keyPair the key pair used to register the device in this configuration
-         * @return this builder
-         */
-        public Builder setKeyPair(@NonNull KeyPair keyPair) {
-            if (keyPair == null) {
-                throw new NullPointerException("Key pair cannot be null");
-            }
-            mKeyPair = keyPair;
-            return this;
-        }
-
-        /**
          * Set the MQTT bridge hostname to use when connecting to Cloud IoT Core.
          *
          * <p>This parameter is optional. If no MQTT bridge hostname is specified, the Google MQTT
@@ -217,9 +189,8 @@ public class IotCoreConfiguration {
          * Core remain valid.
          *
          * <p>Cloud IoT Core authenticates devices using JSON web tokens (JWTs) that devices
-         * send when they initiate a connection with Cloud IoT Core. Those tokens are generated
-         * using the key pair provided by {@link IotCoreConfiguration.Builder#setKeyPair(KeyPair)}
-         * and they are valid for a limited period of time before they expire. Cloud IoT Core allows
+         * send when they initiate a connection with Cloud IoT Core. Those tokens are
+         * valid for a limited period of time before they expire. Cloud IoT Core allows
          * a maximum lifetime of 24 hours. The Cloud IoT Core <a
          * href="https://cloud.google.com/iot/docs/how-tos/credentials/jwts">documentation</a> has
          * more information.
@@ -260,7 +231,6 @@ public class IotCoreConfiguration {
                             mRegistryId,
                             mDeviceId,
                             mCloudRegion,
-                            mKeyPair,
                             mBridgeHostname,
                             mBridgePort,
                             mAuthTokenLifetimeMillis);
@@ -280,7 +250,6 @@ public class IotCoreConfiguration {
      * @param registryId IoT Core device registry ID
      * @param deviceId IoT Core device ID
      * @param cloudRegion the device registry's cloud region
-     * @param keyPair Key pair used to register this device in Cloud IoT Core
      * @param bridgeHostname MQTT bridge hostname for the MQTT broker
      * @param bridgePort MQTT bridge port number
      * @param authTokenLifetimeMillis duration in milliseconds before explicitly refreshing
@@ -291,7 +260,6 @@ public class IotCoreConfiguration {
             @NonNull String registryId,
             @NonNull String deviceId,
             @NonNull String cloudRegion,
-            @NonNull KeyPair keyPair,
             @NonNull String bridgeHostname,
             int bridgePort,
             long authTokenLifetimeMillis) {
@@ -299,7 +267,6 @@ public class IotCoreConfiguration {
         mRegistryId = registryId;
         mDeviceId = deviceId;
         mCloudRegion = cloudRegion;
-        mKeyPair = keyPair;
         mBridgeHostname = bridgeHostname;
         mBridgePort = bridgePort;
         mAuthTokenLifetimeMillis = authTokenLifetimeMillis;
@@ -324,8 +291,7 @@ public class IotCoreConfiguration {
                 && !TextUtils.isEmpty(mCloudRegion)
                 && !TextUtils.isEmpty(mDeviceId)
                 && !TextUtils.isEmpty(mCloudRegion)
-                && !TextUtils.isEmpty(mBridgeHostname)
-                && mKeyPair != null;
+                && !TextUtils.isEmpty(mBridgeHostname);
     }
 
     /** Return this configuration's project ID. */
@@ -346,11 +312,6 @@ public class IotCoreConfiguration {
     /** Return this configuration's Cloud Region. */
     public String getCloudRegion() {
         return mCloudRegion;
-    }
-
-    /** Return this configuration's key pair. */
-    public KeyPair getKeyPair() {
-        return mKeyPair;
     }
 
     /** Returns this configuration's MQTT bridge hostname. */

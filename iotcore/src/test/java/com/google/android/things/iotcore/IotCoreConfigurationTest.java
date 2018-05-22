@@ -33,7 +33,6 @@ public class IotCoreConfigurationTest {
     private static final String REGISTRY_ID = "registry";
     private static final String DEVICE_ID = "device";
     private static final String CLOUD_REGION = "cloud_region";
-    private static final KeyPair KEY_PAIR = new KeyPair(null, null);
     private static final String BRIDGE_HOSTNAME = "hostname";
     private static final short BRIDGE_PORT = 1;
     private static final long AUTH_TOKEN_LIFETIME_DURATION = 1L;
@@ -46,7 +45,6 @@ public class IotCoreConfigurationTest {
                 .setDeviceId(DEVICE_ID)
                 .setBridgeHostname(BRIDGE_HOSTNAME)
                 .setBridgePort(BRIDGE_PORT)
-                .setKeyPair(KEY_PAIR)
                 .setAuthTokenLifetime(AUTH_TOKEN_LIFETIME_DURATION, AUTH_TOKEN_LIFETIME_UNITS)
                 .build();
     }
@@ -56,7 +54,6 @@ public class IotCoreConfigurationTest {
                 .setProjectId(PROJECT_ID)
                 .setRegistry(REGISTRY_ID, CLOUD_REGION)
                 .setDeviceId(DEVICE_ID)
-                .setKeyPair(KEY_PAIR)
                 .build();
     }
 
@@ -76,7 +73,6 @@ public class IotCoreConfigurationTest {
             new IotCoreConfiguration.Builder()
                     .setRegistry(REGISTRY_ID, CLOUD_REGION)
                     .setDeviceId(DEVICE_ID)
-                    .setKeyPair(KEY_PAIR)
                     .build();
             fail("IotCoreConfiguration constructed without Project ID");
         } catch (IllegalStateException expected) {
@@ -90,7 +86,6 @@ public class IotCoreConfigurationTest {
             new IotCoreConfiguration.Builder()
                     .setProjectId(PROJECT_ID)
                     .setDeviceId(DEVICE_ID)
-                    .setKeyPair(KEY_PAIR)
                     .build();
             fail("IotCoreConfiguration constructed without Registry ID");
         } catch (IllegalStateException expected) {
@@ -104,23 +99,8 @@ public class IotCoreConfigurationTest {
             new IotCoreConfiguration.Builder()
                     .setProjectId(PROJECT_ID)
                     .setRegistry(REGISTRY_ID, CLOUD_REGION)
-                    .setKeyPair(KEY_PAIR)
                     .build();
             fail("IotCoreConfiguration constructed without Device ID");
-        } catch (IllegalStateException expected) {
-            assertThat(expected).hasMessageThat().contains("IotCoreConfiguration");
-        }
-    }
-
-    @Test
-    public void testBuilderMissingKeyPair() {
-        try {
-            new IotCoreConfiguration.Builder()
-                    .setProjectId(PROJECT_ID)
-                    .setRegistry(REGISTRY_ID, CLOUD_REGION)
-                    .setDeviceId(DEVICE_ID)
-                    .build();
-            fail("IotCoreConfiguration constructed without KeyPair");
         } catch (IllegalStateException expected) {
             assertThat(expected).hasMessageThat().contains("IotCoreConfiguration");
         }
@@ -133,7 +113,6 @@ public class IotCoreConfigurationTest {
                     .setProjectId(PROJECT_ID)
                     .setRegistry(REGISTRY_ID, CLOUD_REGION)
                     .setDeviceId(DEVICE_ID)
-                    .setKeyPair(KEY_PAIR)
                     .setBridgePort((short) -100)
                     .build();
             fail("IotCoreConfiguration constructed with negative MQTT bridge port");
@@ -149,7 +128,6 @@ public class IotCoreConfigurationTest {
                     .setProjectId(PROJECT_ID)
                     .setRegistry(REGISTRY_ID, CLOUD_REGION)
                     .setDeviceId(DEVICE_ID)
-                    .setKeyPair(KEY_PAIR)
                     .setAuthTokenLifetime(Duration.ofDays(1).toMillis() + 1, TimeUnit.MILLISECONDS)
                     .build();
             fail("IotCoreConfiguration constructed with auth token lifetime greater than 24 hours");
@@ -180,12 +158,6 @@ public class IotCoreConfigurationTest {
     public void testGetCloudRegion() {
         IotCoreConfiguration configuration = buildAllParameters();
         assertThat(configuration.getCloudRegion()).isEqualTo(CLOUD_REGION);
-    }
-
-    @Test
-    public void testGetKeyPair() {
-        IotCoreConfiguration configuration = buildAllParameters();
-        assertThat(configuration.getKeyPair()).isEqualTo(KEY_PAIR);
     }
 
     @Test
