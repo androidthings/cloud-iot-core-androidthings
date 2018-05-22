@@ -74,7 +74,7 @@ import javax.net.ssl.SSLException;
  *
  * <pre class="prettyprint">
  *     IotCoreClient iotCoreClient = new IotCoreClient.Builder()
- *             .setIotCoreConfiguration(configuration)
+ *             .setConnectionParams(connectionParams)
  *             .setKeyPair(keyPair);
  *             .setOnConfigurationListener(onConfigurationListener)
  *             .setConnectionCallback(connectionCallback)
@@ -107,7 +107,7 @@ public class IotCoreClient {
     private static final int QOS_FOR_DEVICE_STATE_MESSAGES = 1;
 
     // All necessary information to connect to Cloud IoT Core.
-    private final IotCoreConfiguration mConfiguration;
+    private final ConnectionParams mConnectionParams;
 
     // Generates signed JWTs to authenticate with Cloud IoT Core.
     private final JwtGenerator mJwtGenerator;
@@ -156,7 +156,7 @@ public class IotCoreClient {
 
     /** IotCoreClient constructor used by the Builder. */
     private IotCoreClient(
-            @NonNull IotCoreConfiguration iotCoreConfiguration,
+            @NonNull ConnectionParams connectionParams,
             @NonNull KeyPair keyPair,
             @NonNull MqttClient mqttClient,
             @NonNull Queue<TelemetryEvent> telemetryQueue,
@@ -165,12 +165,12 @@ public class IotCoreClient {
             @Nullable Executor onConfigurationExecutor,
             @Nullable OnConfigurationListener onConfigurationListener) {
         this(
-                iotCoreConfiguration,
+                connectionParams,
                 mqttClient,
                 new JwtGenerator(
                         keyPair,
-                        iotCoreConfiguration.getProjectId(),
-                        Duration.ofMillis(iotCoreConfiguration.getAuthTokenLifetimeMillis())),
+                        connectionParams.getProjectId(),
+                        Duration.ofMillis(connectionParams.getAuthTokenLifetimeMillis())),
                 new AtomicBoolean(false),
                 new AtomicReference<byte[]>(),
                 telemetryQueue,
@@ -188,7 +188,7 @@ public class IotCoreClient {
 
     @VisibleForTesting
     IotCoreClient(
-            @NonNull IotCoreConfiguration configuration,
+            @NonNull ConnectionParams configuration,
             @NonNull MqttClient mqttClient,
             @NonNull JwtGenerator jwtGenerator,
             @NonNull AtomicBoolean runBackgroundThread,
@@ -201,7 +201,7 @@ public class IotCoreClient {
             @NonNull Semaphore semaphore,
             @NonNull BoundedExponentialBackoff backoff,
             @NonNull AtomicBoolean clientConnectionState) {
-        checkNotNull(configuration, "IotCoreConfiguration");
+        checkNotNull(configuration, "ConnectionParams");
         checkNotNull(mqttClient, "MqttClient");
         checkNotNull(jwtGenerator, "JwtGenerator");
         checkNotNull(runBackgroundThread, "RunBackgroundThread");
@@ -218,7 +218,7 @@ public class IotCoreClient {
             throw new IllegalArgumentException("No executor provided for configuration listener");
         }
 
-        mConfiguration = configuration;
+        mConnectionParams = configuration;
         mMqttClient = mqttClient;
         mJwtGenerator = jwtGenerator;
         mRunBackgroundThread = runBackgroundThread;
@@ -236,7 +236,7 @@ public class IotCoreClient {
 
     /** Constructs IotCoreClient instances. */
     public static class Builder {
-        private IotCoreConfiguration mIotCoreConfiguration;
+        private ConnectionParams mConnectionParams;
         private KeyPair mKeyPair;
         private Queue<TelemetryEvent> mTelemetryQueue;
         private Executor mOnConfigurationExecutor;
@@ -245,16 +245,16 @@ public class IotCoreClient {
         private ConnectionCallback mConnectionCallback;
 
         /**
-         * Set IotCoreConfiguration the client should use to connect to Cloud IoT Core.
+         * Set ConnectionParams the client should use to connect to Cloud IoT Core.
          *
          * <p>This parameter is required.
          *
-         * @param configuration the configuration the client should use
+         * @param connectionParams the connection parameters the client should use
          */
-        public Builder setIotCoreConfiguration(
-                @NonNull IotCoreConfiguration configuration) {
-            checkNotNull(configuration, "Iot Core configuration");
-            mIotCoreConfiguration = configuration;
+        public Builder setConnectionParams(
+                @NonNull ConnectionParams connectionParams) {
+            checkNotNull(connectionParams, "ConnectionParams");
+            mConnectionParams = connectionParams;
             return this;
         }
 
@@ -381,7 +381,7 @@ public class IotCoreClient {
          * @throws IllegalArgumentException if the Builder's parameters are invalid
          */
         public IotCoreClient build() {
-            checkNotNull(mIotCoreConfiguration, "IotCoreConfiguration");
+            checkNotNull(mConnectionParams, "ConnectionParams");
             checkNotNull(mKeyPair, "KeyPair");
             if (mTelemetryQueue == null) {
                 mTelemetryQueue =
@@ -397,8 +397,8 @@ public class IotCoreClient {
             MqttClient mqttClient;
             try {
                 mqttClient = new MqttClient(
-                        mIotCoreConfiguration.getBrokerUrl(),
-                        mIotCoreConfiguration.getClientId(),
+                        mConnectionParams.getBrokerUrl(),
+                        mConnectionParams.getClientId(),
                         new MemoryPersistence());
             } catch (MqttException e) {
                 // According to the Paho documentation, this exception happens when the arguments to
@@ -422,7 +422,7 @@ public class IotCoreClient {
             }
 
             return new IotCoreClient(
-                    mIotCoreConfiguration,
+                    mConnectionParams,
                     mKeyPair,
                     mqttClient,
                     mTelemetryQueue,
@@ -455,7 +455,7 @@ public class IotCoreClient {
 
             @Override
             public void messageArrived(String topic, MqttMessage message) {
-                if (!mConfiguration.getConfigurationTopic().equals(topic)
+                if (!mConnectionParams.getConfigurationTopic().equals(topic)
                         || onConfigurationListener == null
                         || onConfigurationExecutor == null) {
                     return;
@@ -563,7 +563,7 @@ public class IotCoreClient {
             byte[] state = mUnsentDeviceState.get();
             if (state != null) {
                 // Send device state
-                publish(mConfiguration.getDeviceStateTopic(), state, QOS_FOR_DEVICE_STATE_MESSAGES);
+                publish(mConnectionParams.getDeviceStateTopic(), state, QOS_FOR_DEVICE_STATE_MESSAGES);
 
                 // It's possible the device state changed while we were sending the original device
                 // state, so only clear the unsent device state if it didn't change.
@@ -590,7 +590,7 @@ public class IotCoreClient {
 
         // Send the event. Could throw MqttException on error.
         publish(
-                mConfiguration.getTelemetryTopic() + mUnsentTelemetryEvent.getTopicSubpath(),
+                mConnectionParams.getTelemetryTopic() + mUnsentTelemetryEvent.getTopicSubpath(),
                 mUnsentTelemetryEvent.getData(),
                 mUnsentTelemetryEvent.getQos());
 
@@ -697,7 +697,7 @@ public class IotCoreClient {
         mMqttClient.connect(configureConnectionOptions());
 
         // Always subscribe to the device configuration topic
-        mMqttClient.subscribe(mConfiguration.getConfigurationTopic());
+        mMqttClient.subscribe(mConnectionParams.getConfigurationTopic());
         onConnection();
     }
 

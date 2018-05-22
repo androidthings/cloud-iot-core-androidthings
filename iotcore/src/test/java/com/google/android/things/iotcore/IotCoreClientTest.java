@@ -62,7 +62,7 @@ public class IotCoreClientTest {
     private static final byte[] DATA = "Hello world".getBytes();
     private static final int QOS = TelemetryEvent.QOS_AT_LEAST_ONCE;
 
-    private final IotCoreConfiguration mMockIotCoreConfiguration = mock(IotCoreConfiguration.class);
+    private final ConnectionParams mMockConnectionParams = mock(ConnectionParams.class);
     private final MqttClient mMockMqttClient = mock(MqttClient.class);
     private final JwtGenerator mMockJwtGenerator = mock(JwtGenerator.class);
     private final Executor mMockConnectionCallbackExecutor = mock(Executor.class);
@@ -97,7 +97,7 @@ public class IotCoreClientTest {
         mUnsentDeviceStateSpy = spy(new AtomicReference<byte[]>());
 
         mTestIotCoreClient = new IotCoreClient(
-                mMockIotCoreConfiguration,
+                mMockConnectionParams,
                 mMockMqttClient,
                 mMockJwtGenerator,
                 mRunBackgroundThreadSpy,
@@ -128,21 +128,21 @@ public class IotCoreClientTest {
         when(mMockTelemetryEvent.getData()).thenReturn(DATA);
         when(mMockTelemetryEvent.getQos()).thenReturn(QOS);
 
-        // IotCoreConfiguration mock
-        when(mMockIotCoreConfiguration.getTelemetryTopic()).thenReturn(TOPIC);
-        when(mMockIotCoreConfiguration.getDeviceStateTopic()).thenReturn(TOPIC);
-        when(mMockIotCoreConfiguration.getConfigurationTopic()).thenReturn(TOPIC);
-        when(mMockIotCoreConfiguration.getBrokerUrl()).thenReturn("ssl://abc:123");
-        when(mMockIotCoreConfiguration.getClientId()).thenReturn("id");
-        when(mMockIotCoreConfiguration.getProjectId()).thenReturn("id");
-        when(mMockIotCoreConfiguration.getAuthTokenLifetimeMillis()).thenReturn(0L);
+        // ConnectionParams mock
+        when(mMockConnectionParams.getTelemetryTopic()).thenReturn(TOPIC);
+        when(mMockConnectionParams.getDeviceStateTopic()).thenReturn(TOPIC);
+        when(mMockConnectionParams.getConfigurationTopic()).thenReturn(TOPIC);
+        when(mMockConnectionParams.getBrokerUrl()).thenReturn("ssl://abc:123");
+        when(mMockConnectionParams.getClientId()).thenReturn("id");
+        when(mMockConnectionParams.getProjectId()).thenReturn("id");
+        when(mMockConnectionParams.getAuthTokenLifetimeMillis()).thenReturn(0L);
     }
 
     private void setUpWithSerialExecutor() throws JoseException {
         reset(mMockMqttClient);
         SerialExecutor serialExecutor = new SerialExecutor();
         mTestIotCoreClient = new IotCoreClient(
-                mMockIotCoreConfiguration,
+                mMockConnectionParams,
                 mMockMqttClient,
                 mMockJwtGenerator,
                 mRunBackgroundThreadSpy,
@@ -170,7 +170,7 @@ public class IotCoreClientTest {
         mTestIotCoreClient = null;
         mClientMqttCallback = null;
 
-        reset(mMockIotCoreConfiguration);
+        reset(mMockConnectionParams);
         reset(mMockMqttClient);
         reset(mMockJwtGenerator);
         reset(mMockConnectionCallbackExecutor);
@@ -433,7 +433,7 @@ public class IotCoreClientTest {
     public void testBuilderAllParameters() {
         // Throws exception on error
         new IotCoreClient.Builder()
-                .setIotCoreConfiguration(mMockIotCoreConfiguration)
+                .setConnectionParams(mMockConnectionParams)
                 .setKeyPair(mKeyPair)
                 .setTelemetryQueue(mMockTelemetryQueue)
                 .setConnectionCallback(mMockConnectionCallbackExecutor, mMockConnectionCallback)
@@ -446,14 +446,14 @@ public class IotCoreClientTest {
     public void testBuilderRequiredParameters() {
         // Throws exception on error
         new IotCoreClient.Builder()
-                .setIotCoreConfiguration(mMockIotCoreConfiguration)
+                .setConnectionParams(mMockConnectionParams)
                 .setKeyPair(mKeyPair)
                 .build();
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testBuilderFailsWithoutIotCoreConfiguration() {
+    public void testBuilderFailsWithoutConnectionParams() {
         try {
             new IotCoreClient.Builder()
                     .setKeyPair(mKeyPair)
@@ -461,7 +461,7 @@ public class IotCoreClientTest {
                     .setOnConfigurationListener(mMockOnConfigurationListener)
                     .setConnectionCallback(mMockConnectionCallback)
                     .build();
-            fail("Built IotCoreClient without an IotCoreConfiguration");
+            fail("Built IotCoreClient without an ConnectionParams");
         } catch (NullPointerException expected) {
             // Success
         }
@@ -472,7 +472,7 @@ public class IotCoreClientTest {
     public void testBuilderFailsWithoutKeyPair() {
         try {
             new IotCoreClient.Builder()
-                    .setIotCoreConfiguration(mMockIotCoreConfiguration)
+                    .setConnectionParams(mMockConnectionParams)
                     .setTelemetryQueue(mMockTelemetryQueue)
                     .setOnConfigurationListener(mMockOnConfigurationListener)
                     .setConnectionCallback(mMockConnectionCallback)
@@ -487,7 +487,7 @@ public class IotCoreClientTest {
     public void testBuilderDefaultExecutors() {
         // Throws exception on error
         new IotCoreClient.Builder()
-                .setIotCoreConfiguration(mMockIotCoreConfiguration)
+                .setConnectionParams(mMockConnectionParams)
                 .setKeyPair(mKeyPair)
                 .setConnectionCallback(mMockConnectionCallback)
                 .setOnConfigurationListener(mMockOnConfigurationListener)
@@ -533,7 +533,7 @@ public class IotCoreClientTest {
 
     @Test
     public void testTopicPathConcatenation() {
-        IotCoreConfiguration iotCoreConfiguration = new IotCoreConfiguration.Builder()
+        ConnectionParams connectionParams = new ConnectionParams.Builder()
                 .setProjectId("project")
                 .setRegistry("registry", "region")
                 .setDeviceId("device")
@@ -541,7 +541,7 @@ public class IotCoreClientTest {
         TelemetryEvent telemetryMessage =
                 new TelemetryEvent(new byte[1], "abc", TelemetryEvent.QOS_AT_LEAST_ONCE);
 
-        assertThat(iotCoreConfiguration.getTelemetryTopic() + telemetryMessage.getTopicSubpath())
+        assertThat(connectionParams.getTelemetryTopic() + telemetryMessage.getTopicSubpath())
                 .isEqualTo("/devices/device/events/abc");
     }
 }

@@ -28,15 +28,15 @@ import java.util.concurrent.TimeUnit;
  * <p>Specifying the device's client ID requires the full specification for the Cloud IoT Core
  * registry in which the device is registered, which includes the device's Google Cloud project ID,
  * the device's Cloud IoT Core registry ID, the registry's cloud region, and the device's ID within
- * the registry. These parameters are set in the {@link IotCoreConfiguration.Builder}.
+ * the registry. These parameters are set in the {@link ConnectionParams.Builder}.
  *
- * <p>MQTT configuration settings are not required since IotCoreConfiguration can use sensible
+ * <p>MQTT configuration settings are not required since ConnectionParams can use sensible
  * defaults, but users can control these settings using
- * {@link IotCoreConfiguration.Builder#setBridgeHostname(String)},
- * {@link IotCoreConfiguration.Builder#setBridgePort(int)}, and
- * {@link IotCoreConfiguration.Builder#setAuthTokenLifetime(long, TimeUnit)}.
+ * {@link ConnectionParams.Builder#setBridgeHostname(String)},
+ * {@link ConnectionParams.Builder#setBridgePort(int)}, and
+ * {@link ConnectionParams.Builder#setAuthTokenLifetime(long, TimeUnit)}.
  */
-public class IotCoreConfiguration {
+public class ConnectionParams {
     private static final String DEFAULT_BRIDGE_HOSTNAME = "mqtt.googleapis.com";
     private static final int DEFAULT_BRIDGE_PORT = 8883;
     private static final int MAX_TCP_PORT = 65535;
@@ -79,7 +79,7 @@ public class IotCoreConfiguration {
     // Cached broker URL.
     private final String mBrokerUrl;
 
-    /** Builder for IotCoreConfiguration instances. */
+    /** Builder for ConnectionParams instances. */
     public static class Builder {
         private String mProjectId;
         private String mRegistryId;
@@ -220,13 +220,13 @@ public class IotCoreConfiguration {
         }
 
         /**
-         * Construct a new IotCoreConfiguration instance with the parameters given to this Builder.
+         * Construct a new ConnectionParams instance with the parameters given to this Builder.
          *
          * @throws IllegalStateException if this builder's parameters are invalid
          */
-        public IotCoreConfiguration build() {
-            IotCoreConfiguration iotCoreConfiguration =
-                    new IotCoreConfiguration(
+        public ConnectionParams build() {
+            ConnectionParams connectionParams =
+                    new ConnectionParams(
                             mProjectId,
                             mRegistryId,
                             mDeviceId,
@@ -235,16 +235,16 @@ public class IotCoreConfiguration {
                             mBridgePort,
                             mAuthTokenLifetimeMillis);
 
-            if (!iotCoreConfiguration.isValid()) {
-                throw new IllegalStateException("Invalid IotCoreConfiguration parameters.");
+            if (!connectionParams.isValid()) {
+                throw new IllegalStateException("Invalid ConnectionParams parameters.");
             }
-            return iotCoreConfiguration;
+            return connectionParams;
         }
     }
 
     /**
-     * Construct a IotCoreConfiguration instance. Can only be called from a
-     * IotCoreConfiguration.Builder instance.
+     * Construct a ConnectionParams instance. Can only be called from a
+     * ConnectionParams.Builder instance.
      *
      * @param projectId Google Cloud Project ID
      * @param registryId IoT Core device registry ID
@@ -255,7 +255,7 @@ public class IotCoreConfiguration {
      * @param authTokenLifetimeMillis duration in milliseconds before explicitly refreshing
      *         authorization credential
      */
-    private IotCoreConfiguration(
+    private ConnectionParams(
             @NonNull String projectId,
             @NonNull String registryId,
             @NonNull String deviceId,
