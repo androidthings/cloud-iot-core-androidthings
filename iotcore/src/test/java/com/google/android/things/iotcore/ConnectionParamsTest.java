@@ -34,7 +34,7 @@ public class ConnectionParamsTest {
     private static final String DEVICE_ID = "device";
     private static final String CLOUD_REGION = "cloud_region";
     private static final String BRIDGE_HOSTNAME = "hostname";
-    private static final short BRIDGE_PORT = 1;
+    private static final int BRIDGE_PORT = 1;
     private static final long AUTH_TOKEN_LIFETIME_DURATION = 1L;
     private static final TimeUnit AUTH_TOKEN_LIFETIME_UNITS = TimeUnit.HOURS;
 
@@ -113,7 +113,7 @@ public class ConnectionParamsTest {
                     .setProjectId(PROJECT_ID)
                     .setRegistry(REGISTRY_ID, CLOUD_REGION)
                     .setDeviceId(DEVICE_ID)
-                    .setBridgePort((short) -100)
+                    .setBridgePort(-100)
                     .build();
             fail("ConnectionParams constructed with negative MQTT bridge port");
         } catch (IllegalArgumentException expected) {
