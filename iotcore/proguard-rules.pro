@@ -5,17 +5,21 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+-dontpreverify
+-repackageclasses ''
+-keepparameternames
+-renamesourcefileattribute SourceFile
+-keepattributes *Annotation*, Exceptions, InnerClasses, SourceFile, LineNumberTable,
+                Signature, Deprecated, EnclosingMethod
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Remove log statements
+-assumenosideeffects class android.util.Log {
+    public static *** v(...);
+    public static *** d(...);
+    public static *** i(...);
+}
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Keep public classes/interfaces
+-keep public class com.google.android.things.iotcore.* {
+    public protected *;
+}
