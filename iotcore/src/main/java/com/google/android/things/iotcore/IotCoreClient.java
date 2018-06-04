@@ -563,7 +563,8 @@ public class IotCoreClient {
             byte[] state = mUnsentDeviceState.get();
             if (state != null) {
                 // Send device state
-                publish(mConnectionParams.getDeviceStateTopic(), state, QOS_FOR_DEVICE_STATE_MESSAGES);
+                publish(mConnectionParams.getDeviceStateTopic(), state,
+                        QOS_FOR_DEVICE_STATE_MESSAGES);
 
                 // It's possible the device state changed while we were sending the original device
                 // state, so only clear the unsent device state if it didn't change.
