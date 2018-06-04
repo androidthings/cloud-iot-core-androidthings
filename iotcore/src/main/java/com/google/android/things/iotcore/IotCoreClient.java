@@ -443,11 +443,23 @@ public class IotCoreClient {
         return new MqttCallback() {
             @Override
             public void connectionLost(Throwable cause) {
+                // Release the semaphore blocking the background thread so it reconnects to IoT
+                // Core.
+                mSemaphore.release();
+
                 int reason = ConnectionCallback.REASON_UNKNOWN;
                 if (cause.getCause() instanceof SSLException) {
                     reason = ConnectionCallback.REASON_NETWORK_DOWN;
                 } else if (cause.getCause() instanceof EOFException) {
-                    reason = ConnectionCallback.REASON_CLIENT_CLOSED;
+                    if (mRunBackgroundThread.get()) {
+                        // Since mRunBackgroundThread is true, the EOFException must have been
+                        // caused by Cloud IoT Core.
+                        reason = ConnectionCallback.REASON_CONNECTION_TIMEOUT;
+                    } else {
+                        // mRunBackgroundThread is false, so the client must have called disconnect
+                        // and caused the EOFException.
+                        reason = ConnectionCallback.REASON_CLIENT_CLOSED;
+                    }
                 }
 
                 onDisconnect(reason);
