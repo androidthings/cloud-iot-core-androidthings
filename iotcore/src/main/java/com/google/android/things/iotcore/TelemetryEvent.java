@@ -41,7 +41,7 @@ public class TelemetryEvent {
     public static final int QOS_AT_LEAST_ONCE = 1;
 
     /**
-     * Construct a new TelemetryEvent with the data to publish and an
+     * Constructs a new TelemetryEvent with the data to publish and an
      * optional topic subpath destination.
      *
      * @param data the telemetry event data to send to Cloud IoT Core
@@ -65,21 +65,31 @@ public class TelemetryEvent {
         mQos = qos;
     }
 
-    /** Return this event's data. */
+    /**
+     * Gets this event's data.
+     *
+     * @return this event's data
+     */
     public byte[] getData() {
         return mData;
     }
 
     /**
-     * Return this event's topic.
+     * Gets this event's topic subpath.
      *
-     *<p>Non-empty strings returned by this method always begin with a slash (e.g. /foo).
+     * <p>Non-empty strings returned by this method always begin with a slash (e.g. /foo).
+     *
+     * @return this event's topic subpath
      */
     public String getTopicSubpath() {
         return mTopicSubpath;
     }
 
-    /** Return this event's quality of service settings. */
+    /**
+     * Gets this event's quality of service settings.
+     *
+     * @return this event's QOS settings
+     */
     public @Qos int getQos() {
         return mQos;
     }
