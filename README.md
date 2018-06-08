@@ -38,7 +38,7 @@ dependencies {
 
 ### Communicate with Cloud IoT Core
 
-After Cloud IoT Core is configured, getting your device connected only takes a few lines of code:
+After Cloud IoT Core is configured, getting your device connected takes only a few lines of code:
 
 ```java
 // Load the keys used to register this device
