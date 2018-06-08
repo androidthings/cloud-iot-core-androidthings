@@ -1,9 +1,12 @@
-# IoT Core Client for Android Things
+# Cloud IoT Core Client for Android Things
 
-The IoT Core Client makes it easy to integrate Android Things with Google Cloud IoT Core by
+The Cloud IoT Core Client makes it simple to integrate Android Things with Cloud IoT Core by
 providing abstractions for all of Cloud IoT Core's
-[device functions](https://cloud.google.com/iot/docs/concepts/devices), publishing telemetry
-events, publishing device state, and receiving device configuration from Cloud IoT Core.
+[device functions](https://cloud.google.com/iot/docs/concepts/devices):
+
+* Publishing telemetry events
+* Publishing device state
+* Receiving device configuration from Cloud IoT Core.
 
 The library handles all concurrency so clients can use it in the main thread. It also manages
 interactions with the Cloud IoT Core
@@ -12,7 +15,7 @@ about low-level networking protocols.
 
 ## Getting started
 
-There are three steps to using this library: set up Cloud IoT Core, download the library, and then,
+There are three steps to using this library: set up Cloud IoT Core, download the library, and then
 start using the library to communicate with Cloud IoT Core.
 
 ### Set up Cloud IoT Core
@@ -35,7 +38,7 @@ dependencies {
 
 ### Communicate with Cloud IoT Core
 
-Once Cloud IoT Core is configured, getting your device connected only takes a few lines of code:
+After Cloud IoT Core is configured, getting your device connected only takes a few lines of code:
 
 ```java
 // Load the keys used to register this device
@@ -45,7 +48,7 @@ KeyPair keys =  ...
 ConnectionParams connectionParams = new ConnectionParams.Builder()
     .setProjectId("<your Google Cloud project ID>")
     .setRegistry("<your Cloud IoT Core registry ID>", "<your registry's cloud region>")
-    .setDeviceId("<this device's ID in the registry>")
+    .setDeviceId("<the device's ID in the registry>")
     .build();
 
 // Initialize the IoT Core client
@@ -61,12 +64,13 @@ client.connect();
 client.publishDeviceState("Hello world!\n".getBytes());
 ```
 
-The full documentation is available at **TODO(blaws): link to javadocs**
+The full documentation is available at the [Cloud IoT Core
+website](https://cloud.google.com/iot/docs/reference/android-things/javadoc).
 
 ## Learn more
 
 * [Android Things](https://developer.android.com/things/)
-* [Google Cloud IoT Core](https://cloud.google.com/iot-core/)
+* [Cloud IoT Core](https://cloud.google.com/iot-core/)
 
 ## License
 
