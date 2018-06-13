@@ -87,7 +87,8 @@ import javax.net.ssl.SSLException;
  * restored. To customize the behavior of the offline message queue, call
  * {@link IotCoreClient.Builder#setTelemetryQueue(Queue)} with a queue implementation suited to
  * your application. If no queue implementation is provided, the default queue implementation is a
- * FIFO queue with a maximum capacity of 1000 telemetry events.
+ * queue that stores up to 1000 telemetry events and drops events from the head of the queue when
+ * messages are inserted beyond the maximum capacity.
  */
 public class IotCoreClient {
     private static final String TAG = IotCoreClient.class.getSimpleName();
@@ -279,8 +280,9 @@ public class IotCoreClient {
          * Set the queue the client should use for storing telemetry events when the client is
          * disconnected from Cloud IoT Core.
          *
-         * <p>This parameter is optional. If the telemetry queue is unspecified, a FIFO queue with a
-         * maximum capacity of 1000 events is used by default.
+         * <p>This parameter is optional. If the telemetry queue is unspecified, the default queue
+         * implementation is a queue that stores up to 1000 telemetry events and drops events from
+         * the head of the queue when messages are inserted beyond the maximum capacity.
          *
          * <p>Users with more complicated requirements can provide their own telemetry queue
          * implementation to control IotCoreClient's behavior when they are trying to publish
@@ -385,7 +387,7 @@ public class IotCoreClient {
             checkNotNull(mKeyPair, "KeyPair");
             if (mTelemetryQueue == null) {
                 mTelemetryQueue =
-                        new CapacityQueue<>(DEFAULT_QUEUE_CAPACITY, CapacityQueue.DROP_POLICY_TAIL);
+                        new CapacityQueue<>(DEFAULT_QUEUE_CAPACITY, CapacityQueue.DROP_POLICY_HEAD);
             }
             if (mOnConfigurationListener != null && mOnConfigurationExecutor == null) {
                 mOnConfigurationExecutor = createDefaultExecutor();
