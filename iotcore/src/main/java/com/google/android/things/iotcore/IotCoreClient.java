@@ -622,19 +622,21 @@ public class IotCoreClient {
             // the way the message itself was formatted or an error with the network.
             //
             // In the network error case, the message can be resent when the network is working
-            // again. Rethrow the exception so higher level functions can take case of reconnecting
+            // again. Rethrow the exception so higher level functions can take care of reconnecting
             // and resending the message.
             //
-            // If the issue was with the message itself, don't propagate the error since there's
+            // If the message itself was the problem, don't propagate the error since there's
             // nothing we can do about it except log the error to the client.
             if (isRetryableError(mqttException)) {
-                // Rethrow. Also need to add a permit to the semaphore that controls the background
+                // Rethrow and add a permit to the semaphore that controls the background
                 // thread since the background thread removed a permit when trying to publish this
                 // message originally.
                 mSemaphore.release();
                 throw mqttException;
             }
 
+            // Return success and don't try to resend the message that caused the exception. Log
+            // the error so the user has some indication that something went wrong.
             Log.w(TAG, "Error publishing message to " + topic, mqttException);
         }
     }
@@ -657,7 +659,8 @@ public class IotCoreClient {
             case MqttException.REASON_CODE_CLIENT_TIMEOUT:
                 return true;
             case MqttException.REASON_CODE_CLIENT_EXCEPTION:
-                // This case happens when there is no network, and it gives very little information.
+                // This case happens when there is no internet connection. Unfortunately, Paho
+                // doesn't provide a better way to get that information.
                 if (mqttException.getCause() instanceof UnknownHostException) {
                     return true;
                 }
