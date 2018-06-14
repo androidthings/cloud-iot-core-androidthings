@@ -28,7 +28,7 @@ public abstract class ConnectionCallback {
     @IntDef({
             REASON_UNKNOWN,
             REASON_NOT_AUTHORIZED,
-            REASON_NETWORK_DOWN,
+            REASON_CONNECTION_LOST,
             REASON_CONNECTION_TIMEOUT,
             REASON_CLIENT_CLOSED,
     })
@@ -40,8 +40,8 @@ public abstract class ConnectionCallback {
     /** The configuration used to connect to Cloud IoT Core was invalid. */
     public static final int REASON_NOT_AUTHORIZED = 1;
 
-    /** The device lost connection to the internet. */
-    public static final int REASON_NETWORK_DOWN = 2;
+    /** The device lost connection to Cloud IoT Core. */
+    public static final int REASON_CONNECTION_LOST = 2;
 
     /** Timeout occurred while connecting the MQTT bridge. */
     public static final int REASON_CONNECTION_TIMEOUT = 3;
