@@ -17,10 +17,13 @@ package com.google.android.things.iotcore;
 import static com.google.common.truth.Truth.assertThat;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 
 import java.util.Iterator;
 
 /** CapacityQueue unit tests. */
+@RunWith(RobolectricTestRunner.class)
 public class CapacityQueueTest {
 
     private static final int DEFAULT_CAPACITY = 10;

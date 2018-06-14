@@ -16,6 +16,7 @@ package com.google.android.things.iotcore;
 
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -26,6 +27,8 @@ import java.util.Iterator;
 
 /** Queue implementation with limited capacity. */
 class CapacityQueue<E> extends AbstractQueue<E> {
+    private static final String TAG = CapacityQueue.class.getSimpleName();
+
     /**
      * A CapacityQueue's drop policy determines how CapacityQueue handles attempts to enqueue new
      * elements after the queue is at maximum capacity.
@@ -75,6 +78,7 @@ class CapacityQueue<E> extends AbstractQueue<E> {
 
         // DROP_POLICY_HEAD
         if (mDeque.size() >= mMaxCapacity) {
+            Log.d(TAG, "Dropping from head");
             mDeque.removeFirst();
         }
         return mDeque.offerLast(e);
