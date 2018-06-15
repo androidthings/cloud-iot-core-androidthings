@@ -94,7 +94,7 @@ public class ConnectionParams {
          *
          * <p>This parameter is required.
          *
-         * @param projectId the Google Cloud project ID for this configuration
+         * @param projectId the Google Cloud project ID for these connection parameters
          * @return this builder
          */
         public Builder setProjectId(@NonNull String projectId) {
@@ -132,7 +132,7 @@ public class ConnectionParams {
          *
          * <p>This parameter is required.
          *
-         * @param deviceId the Cloud IoT Core device ID to use for this configuration
+         * @param deviceId the Cloud IoT Core device ID to use for these connection parameters
          * @return this builder
          */
         public Builder setDeviceId(@NonNull String deviceId) {
@@ -149,7 +149,7 @@ public class ConnectionParams {
          * <p>This parameter is optional. If no MQTT bridge hostname is specified, the Google MQTT
          * bridge, mqtt.googleapis.com, is used by default.
          *
-         * @param bridgeHostname the MQTT bridge hostname to use for this configuration
+         * @param bridgeHostname the MQTT bridge hostname to use for these connection parameters
          * @return this builder
          */
         public Builder setBridgeHostname(@NonNull String bridgeHostname) {
@@ -169,7 +169,7 @@ public class ConnectionParams {
          * <p>If port 8883 is blocked by your firewall, you also can use port 443 to
          * connect to the default MQTT bridge, mqtt.googleapis.com.
          *
-         * @param bridgePort the MQTT bridge port number to use in this configuration
+         * @param bridgePort the MQTT bridge port number to use in these connection parameters
          * @return this builder
          */
         public Builder setBridgePort(int bridgePort) {
@@ -222,6 +222,7 @@ public class ConnectionParams {
         /**
          * Construct a new ConnectionParams instance with the parameters given to this Builder.
          *
+         * @return a new ConnectionParams instance
          * @throws IllegalStateException if this builder's parameters are invalid
          */
         public ConnectionParams build() {
@@ -294,72 +295,111 @@ public class ConnectionParams {
                 && !TextUtils.isEmpty(mBridgeHostname);
     }
 
-    /** Return this configuration's project ID. */
+    /**
+     * Returns the project ID specified by these connection parameters.
+     *
+     * @return the project ID
+     */
     public String getProjectId() {
         return mProjectId;
     }
 
-    /** Return this configuration's registry ID. */
+    /**
+     * Returns the registry ID specified by these connection parameters.
+     *
+     * @return the registry ID
+     */
     public String getRegistryId() {
         return mRegistryId;
     }
 
-    /** Return this configuration's device ID. */
+    /**
+     * Returns the device ID specified by these connection parameters.
+     *
+     * @return the device ID
+     */
     public String getDeviceId() {
         return mDeviceId;
     }
 
-    /** Return this configuration's Cloud Region. */
+    /**
+     * Returns the Cloud Region specified by these connection parameters.
+     *
+     * @return the cloud region
+     */
     public String getCloudRegion() {
         return mCloudRegion;
     }
 
-    /** Returns this configuration's MQTT bridge hostname. */
+    /**
+     * Returns the MQTT bridge hostname specified by these connection parameters.
+     *
+     * @return the bridge hostname
+     */
     public String getBridgeHostname() {
         return mBridgeHostname;
     }
 
-    /** Returns this configuration's MQTT bridge port number. */
+    /**
+     * Returns the MQTT bridge port number specified by these connection parameters.
+     *
+     * @return the bridge port number
+     */
     public int getBridgePort() {
         return mBridgePort;
     }
 
-    /** Return the MQTT broker URL formatted as "ssl://&lt;hostname&gt;:&lt;port&gt;". */
+    /**
+     * Returns the MQTT broker URL formatted as "ssl://&lt;hostname&gt;:&lt;port&gt;".
+     *
+     * @return the broker URL
+     */
     public String getBrokerUrl() {
         return mBrokerUrl;
     }
 
-    /** Return this configurations authentication token lifetime in milliseconds. */
+    /**
+     * Returns the authentication token lifetime in milliseconds specified by these connection
+     * parameters.
+     *
+     * @return the authentication token lifetime in milliseconds
+     */
     public long getAuthTokenLifetimeMillis() {
         return mAuthTokenLifetimeMillis;
     }
 
     /**
-     * Return the full path used to identify this device as defined in <a
+     * Returns the full path used to identify this device as defined in <a
      * href="https://cloud.google.com/iot/docs/concepts/devices#devices">the device documentation
      * </a>.
+     *
+     * @return the Cloud IoT Core client ID specified by these connection parameters
      */
     public String getClientId() {
         return mClientId;
     }
 
     /**
-     * Return the telemetry topic for this device formatted according to <a
+     * Returns the telemetry topic for this device formatted according to <a
      * href="https://cloud.google.com/iot/docs/protocol_bridge_guide#telemetry_events">the telemetry
      * documentation</a>.
      *
      * <p>Strings returned from this method do not end with a trailing slash.
+     *
+     * @return the telemetry topic specified by these connection parameters
      */
     public String getTelemetryTopic() {
         return mTelemetryTopic;
     }
 
     /**
-     * Return the device state topic for this device formatted according to <a
+     * Returns the device state topic for this device formatted according to <a
      * href="https://cloud.google.com/iot/docs/how-tos/config/getting-state#reporting_device_state">
      * the device state documentation</a>.
      *
      * <p>Strings returned from this method do not end with a trailing slash.
+     *
+     * @return the device state topic specified by these connection parameters
      */
     public String getDeviceStateTopic() {
         return mDeviceStateTopic;
@@ -371,6 +411,8 @@ public class ConnectionParams {
      * the configuration documentation</a>.
      *
      * <p>Strings returned from this method do not end with a trailing slash.
+     *
+     * @return the device configuration topic specified by these connection parameters
      */
     public String getConfigurationTopic() {
         return mConfigurationTopic;

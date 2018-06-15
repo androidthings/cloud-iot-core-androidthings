@@ -251,6 +251,7 @@ public class IotCoreClient {
          * <p>This parameter is required.
          *
          * @param connectionParams the connection parameters the client should use
+         * @return this builder
          */
         public Builder setConnectionParams(
                 @NonNull ConnectionParams connectionParams) {
@@ -269,6 +270,7 @@ public class IotCoreClient {
          * <p>This parameter is required.
          *
          * @param keyPair the key pair used to register the device in this configuration
+         * @return this builder
          */
         public Builder setKeyPair(@NonNull KeyPair keyPair) {
             checkNotNull(keyPair, "Key pair");
@@ -296,6 +298,7 @@ public class IotCoreClient {
          *
          * @param telemetryQueue the queue this client should use for storing unpublished telemetry
          *     events
+         * @return this builder
          */
         public Builder setTelemetryQueue(
                 @NonNull Queue<TelemetryEvent> telemetryQueue) {
@@ -311,6 +314,7 @@ public class IotCoreClient {
          *
          * @param executor the thread the callback should be executed on
          * @param callback the callback to add
+         * @return this builder
          */
         public Builder setConnectionCallback(
                 @NonNull Executor executor, @NonNull ConnectionCallback callback) {
@@ -328,6 +332,7 @@ public class IotCoreClient {
          * <p>This parameter is optional.
          *
          * @param callback the callback to add
+         * @return this builder
          */
         public Builder setConnectionCallback(@NonNull ConnectionCallback callback) {
             checkNotNull(callback, "Connection callback");
@@ -347,6 +352,7 @@ public class IotCoreClient {
          *
          * @param executor the thread the callback should be executed on
          * @param listener the listener to add
+         * @return this builder
          */
         public Builder setOnConfigurationListener(
                 @NonNull Executor executor, @NonNull OnConfigurationListener listener) {
@@ -369,6 +375,7 @@ public class IotCoreClient {
          * <p>This parameter is optional.
          *
          * @param listener the listener to add
+         * @return this builder
          */
         public Builder setOnConfigurationListener(
                 @NonNull OnConfigurationListener listener) {
@@ -380,6 +387,7 @@ public class IotCoreClient {
         /**
          * Construct a new IotCoreClient with the Builder's parameters.
          *
+         * @return a new IotCoreClient instance
          * @throws IllegalArgumentException if the Builder's parameters are invalid
          */
         public IotCoreClient build() {
@@ -804,7 +812,11 @@ public class IotCoreClient {
     }
 
 
-    /** Returns true if connected to Cloud IoT Core, and returns false otherwise. */
+    /**
+     * Returns true if connected to Cloud IoT Core, and returns false otherwise.
+     *
+     * @return whether the client is connection to Cloud IoT Core
+     */
     public boolean isConnected() {
         return mMqttClient.isConnected();
     }
