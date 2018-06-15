@@ -64,13 +64,17 @@ client.connect();
 client.publishDeviceState("Hello world!\n".getBytes());
 ```
 
-The full documentation is available at the [Cloud IoT Core
-website](https://cloud.google.com/iot/docs/reference/android-things/javadoc).
+Check out the Android Things
+[Sensorhub sample app][sensorhub]
+for an example. The library's full documentation is available on the
+[Cloud IoT Core website][javadocs].
 
 ## Learn more
 
 * [Android Things](https://developer.android.com/things/)
 * [Cloud IoT Core](https://cloud.google.com/iot-core/)
+* [Sensorhub Example][sensorhub]
+* [Javadocs][javadocs]
 
 ## License
 
@@ -87,3 +91,6 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+[sensorhub]: https://github.com/androidthings/sensorhub-cloud-iot
+[javadocs]: https://cloud.google.com/iot/docs/reference/android-things/javadoc
