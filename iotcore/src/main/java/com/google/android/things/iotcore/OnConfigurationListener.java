@@ -20,7 +20,7 @@ public interface OnConfigurationListener {
     /**
      * Invoked when device configuration data is received from Cloud IoT Core.
      *
-     * @param configurationData Data received from Cloud IoT Core.
+     * @param configurationData data received from Cloud IoT Core
      */
     void onConfigurationReceived(byte[] configurationData);
 }
