@@ -37,13 +37,13 @@ public abstract class ConnectionCallback {
     /** Could not determine the source of the error. */
     public static final int REASON_UNKNOWN = 0;
 
-    /** The configuration used to connect to Cloud IoT Core was invalid. */
+    /** The parameters used to connect to Cloud IoT Core were invalid. */
     public static final int REASON_NOT_AUTHORIZED = 1;
 
     /** The device lost connection to Cloud IoT Core. */
     public static final int REASON_CONNECTION_LOST = 2;
 
-    /** Timeout occurred while connecting the MQTT bridge. */
+    /** Timeout occurred while connecting to the MQTT bridge. */
     public static final int REASON_CONNECTION_TIMEOUT = 3;
 
     /** The client closed the connection. */
