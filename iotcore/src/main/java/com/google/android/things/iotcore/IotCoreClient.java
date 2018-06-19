@@ -528,13 +528,13 @@ public class IotCoreClient {
                 // Error isn't recoverable. I.e. the error has to do with the way the client is
                 // configured. Stop the thread to avoid spamming GCP.
                 mRunBackgroundThread.set(false);
-                Log.d(TAG, "Reconnect loop unrecoverable error", mqttException);
+                Log.e(TAG, "Disconnected from Cloud IoT Core and cannot reconnect", mqttException);
             }
             onDisconnect(getDisconnectionReason(mqttException));
         } catch (JoseException joseException) {
             // Error signing the JWT. Not a retryable error.
             mRunBackgroundThread.set(false);
-            Log.d(TAG, "Reconnect loop unrecoverable error", joseException);
+            Log.e(TAG, "Disconnected from Cloud IoT Core and cannot reconnect", joseException);
         }
     }
 
@@ -576,6 +576,7 @@ public class IotCoreClient {
                 // Send device state
                 publish(mConnectionParams.getDeviceStateTopic(), state,
                         QOS_FOR_DEVICE_STATE_MESSAGES);
+                Log.d(TAG, "Published state: " + new String(state));
 
                 // It's possible the device state changed while we were sending the original device
                 // state, so only clear the unsent device state if it didn't change.
@@ -605,6 +606,7 @@ public class IotCoreClient {
                 mConnectionParams.getTelemetryTopic() + mUnsentTelemetryEvent.getTopicSubpath(),
                 mUnsentTelemetryEvent.getData(),
                 mUnsentTelemetryEvent.getQos());
+        Log.d(TAG, "Published telemetry event: " + new String(mUnsentTelemetryEvent.getData()));
 
         // Event sent successfully. Clear the cached event.
         mUnsentTelemetryEvent = null;
