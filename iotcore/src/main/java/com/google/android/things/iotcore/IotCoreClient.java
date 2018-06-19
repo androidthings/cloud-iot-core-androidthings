@@ -458,20 +458,9 @@ public class IotCoreClient {
                 mSemaphore.release();
 
                 int reason = ConnectionCallback.REASON_UNKNOWN;
-                if (cause.getCause() instanceof SSLException) {
-                    reason = ConnectionCallback.REASON_NETWORK_DOWN;
-                } else if (cause.getCause() instanceof EOFException) {
-                    if (mRunBackgroundThread.get()) {
-                        // Since mRunBackgroundThread is true, the EOFException must have been
-                        // caused by Cloud IoT Core.
-                        reason = ConnectionCallback.REASON_CONNECTION_TIMEOUT;
-                    } else {
-                        // mRunBackgroundThread is false, so the client must have called disconnect
-                        // and caused the EOFException.
-                        reason = ConnectionCallback.REASON_CLIENT_CLOSED;
-                    }
+                if (cause instanceof MqttException) {
+                    reason = getDisconnectionReason((MqttException) cause);
                 }
-
                 onDisconnect(reason);
             }
 
@@ -672,6 +661,16 @@ public class IotCoreClient {
                 if (mqttException.getCause() instanceof UnknownHostException) {
                     return true;
                 }
+            case MqttException.REASON_CODE_CONNECTION_LOST:
+                // If the MqttException's cause is an EOFException, then the client or Cloud IoT
+                // Core closed the connection. If mRunBackgroundThread is true, then we know the
+                // client didn't close the connection and the connection was likely closed because
+                // the client was publishing device state updates too quickly. Mark this as a
+                // "retryable" error so the message that caused the exception isn't discarded.
+                if (mqttException.getCause() instanceof EOFException
+                        && mRunBackgroundThread.get()) {
+                    return true;
+                }
             default:
                 return false;
         }
@@ -688,9 +687,23 @@ public class IotCoreClient {
                 return ConnectionCallback.REASON_NOT_AUTHORIZED;
             case MqttException.REASON_CODE_CONNECTION_LOST:
                 if (mqttException.getCause() instanceof EOFException) {
-                    // This case happens if the client uses an invalid GCP project ID or if the
-                    // broker rejects the client.
-                    return ConnectionCallback.REASON_NOT_AUTHORIZED;
+                    // This case happens when Paho or Cloud IoT Core closes the connection.
+                    if (mRunBackgroundThread.get()) {
+                        // If mRunBackgroundThread is true, then Cloud IoT Core closed the
+                        // connection. For example, this could happen if the client used an invalid
+                        // GCP project ID, the client exceeds a rate limit set by Cloud IoT Core, or
+                        // if the MQTT broker address is invalid.
+                        return ConnectionCallback.REASON_CONNECTION_LOST;
+                    } else {
+                        // If mRunBackgroundThread is false, then the client closed the connection.
+                        return ConnectionCallback.REASON_CLIENT_CLOSED;
+                    }
+                }
+
+                if (mqttException.getCause() instanceof SSLException) {
+                    // This case happens when something goes wrong in the network that ends an
+                    // existing connection to Cloud IoT Core (e.g. the wifi driver resets).
+                    return ConnectionCallback.REASON_CONNECTION_LOST;
                 }
                 return ConnectionCallback.REASON_UNKNOWN;
             case MqttException.REASON_CODE_CLIENT_EXCEPTION:
@@ -704,7 +717,7 @@ public class IotCoreClient {
                     // This case happens if the client is disconnected from the internet or if they
                     // use an invalid hostname for the MQTT bridge. Unfortunately, Paho doesn't
                     // provide a way to get more information.
-                    return ConnectionCallback.REASON_NETWORK_DOWN;
+                    return ConnectionCallback.REASON_CONNECTION_LOST;
                 }
                 return ConnectionCallback.REASON_UNKNOWN;
             case MqttException.REASON_CODE_CLIENT_TIMEOUT:

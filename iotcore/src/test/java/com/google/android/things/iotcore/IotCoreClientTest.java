@@ -309,24 +309,28 @@ public class IotCoreClientTest {
     }
 
     @Test
-    public void testOnDisconnectCallbackInvokedNetoworkDownSerialExecutor() throws JoseException {
+    public void testOnDisconnectCallbackInvokedNetworkDownSerialExecutor() throws JoseException {
         setUpWithSerialExecutor();
-        Throwable mockThrowable = mock(Throwable.class);
-        when(mockThrowable.getCause()).thenReturn(new SSLException("Fake disconnect"));
+        MqttException mockMqttException = mock(MqttException.class);
+        when(mockMqttException.getReasonCode())
+                .thenReturn((int) MqttException.REASON_CODE_CONNECTION_LOST);
+        when(mockMqttException.getCause()).thenReturn(new SSLException("Fake disconnect"));
 
         mClientConnectionStateSpy.set(true);
-        mClientMqttCallback.connectionLost(mockThrowable);
+        mClientMqttCallback.connectionLost(mockMqttException);
 
-        verify(mMockConnectionCallback).onDisconnected(ConnectionCallback.REASON_NETWORK_DOWN);
+        verify(mMockConnectionCallback).onDisconnected(ConnectionCallback.REASON_CONNECTION_LOST);
     }
 
     @Test
     public void testOnDisconnectCallbackInvokedClientClosed() {
-        Throwable mockThrowable = mock(Throwable.class);
-        when(mockThrowable.getCause()).thenReturn(new EOFException("Fake disconnect"));
+        MqttException mockMqttException = mock(MqttException.class);
+        when(mockMqttException.getReasonCode())
+                .thenReturn((int) MqttException.REASON_CODE_CONNECTION_LOST);
+        when(mockMqttException.getCause()).thenReturn(new EOFException("Fake disconnect"));
 
         mClientConnectionStateSpy.set(true);
-        mClientMqttCallback.connectionLost(mockThrowable);
+        mClientMqttCallback.connectionLost(mockMqttException);
 
         verify(mMockConnectionCallbackExecutor).execute(any(Runnable.class));
     }
@@ -334,11 +338,13 @@ public class IotCoreClientTest {
     @Test
     public void testOnDisconnectCallbackInvokedClientClosedSerialExecutor() throws JoseException {
         setUpWithSerialExecutor();
-        Throwable mockThrowable = mock(Throwable.class);
-        when(mockThrowable.getCause()).thenReturn(new EOFException("Fake disconnect"));
+        MqttException mockMqttException = mock(MqttException.class);
+        when(mockMqttException.getReasonCode())
+                .thenReturn((int) MqttException.REASON_CODE_CONNECTION_LOST);
+        when(mockMqttException.getCause()).thenReturn(new EOFException("Fake disconnect"));
 
         mClientConnectionStateSpy.set(true);
-        mClientMqttCallback.connectionLost(mockThrowable);
+        mClientMqttCallback.connectionLost(mockMqttException);
 
         verify(mMockConnectionCallback).onDisconnected(ConnectionCallback.REASON_CLIENT_CLOSED);
     }
