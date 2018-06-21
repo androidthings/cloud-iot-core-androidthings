@@ -1,16 +1,20 @@
-apply plugin: 'com.github.dcendents.android-maven'
-apply plugin: 'com.jfrog.bintray'
 apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
 
-version '1.0.0'
+def VERSIONID = "1.0.0"
+def GROUPID = "com.google.android.things"
+def ARTIFACTID = "cloud-iot-core"
 
 publishing {
     publications {
         Production(MavenPublication) {
             artifact("$buildDir/outputs/aar/iotcore-release.aar")
-            groupId 'com.google.android.things'
-            artifactId 'cloud-iot-core'
-            version this.version
+            artifact(sourcesJar)
+            artifact(javadocJar)
+
+            groupId GROUPID
+            artifactId ARTIFACTID
+            version VERSIONID
 
             pom.withXml {
                 def dependenciesNode = asNode().appendNode('dependencies')
@@ -30,28 +34,20 @@ publishing {
 bintray {
     user = System.getenv('BINTRAY_USER')
     key = System.getenv('BINTRAY_API_KEY')
-    configurations = ['archives']
+    publications = ['Production']
+
     pkg {
         repo = 'androidthings'
-        name = 'cloud-iot-core'
+        name = ARTIFACTID
         userOrg = 'google'
         licenses = ['Apache-2.0']
         desc = 'Android Things client library for Google Cloud IoT Core.'
         publicDownloadNumbers = false
-    }
-}
-
-install {
-    repositories.mavenInstaller {
-        pom.project {
-            name 'cloud-iot-core'
-            description 'Android Things client library for Google Cloud IoT Core.'
-            packaging 'aar'
-            developers {
-                developer {
-                    name 'google'
-                }
-            }
+        version {
+          name = VERSIONID
+          gpg {
+            sign = true
+          }
         }
     }
 }
