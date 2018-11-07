@@ -7,6 +7,7 @@ providing abstractions for all of Cloud IoT Core's
 * Publishing telemetry events
 * Publishing device state
 * Receiving device configuration from Cloud IoT Core
+* Receiving device commands from Cloud IoT Core
 
 The library handles all concurrency so clients can use it in the main thread. It also manages
 interactions with the Cloud IoT Core
