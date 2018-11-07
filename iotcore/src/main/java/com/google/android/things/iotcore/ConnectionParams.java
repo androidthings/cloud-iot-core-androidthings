@@ -76,6 +76,9 @@ public class ConnectionParams {
     // Cached Cloud IoT Core device configuration topic.
     private final String mConfigurationTopic;
 
+    // Cached Cloud IoT Core device commands topic.
+    private final String mCommandsTopicPrefix;
+
     // Cached broker URL.
     private final String mBrokerUrl;
 
@@ -284,6 +287,7 @@ public class ConnectionParams {
         mTelemetryTopic = "/devices/" + mDeviceId + "/events";
         mDeviceStateTopic = "/devices/" + mDeviceId + "/state";
         mConfigurationTopic = "/devices/" + mDeviceId + "/config";
+        mCommandsTopicPrefix = "/devices/" + mDeviceId + "/commands";
     }
 
     private boolean isValid() {
@@ -416,5 +420,16 @@ public class ConnectionParams {
      */
     public String getConfigurationTopic() {
         return mConfigurationTopic;
+    }
+
+    /**
+     * Returns the commands topic for this device.
+     *
+     * <p>Strings returned from this method do not end with a trailing slash.
+     *
+     * @return the device commands topic specified by these connection parameters
+     */
+    public String getCommandsTopicPrefix() {
+        return mCommandsTopicPrefix;
     }
 }
