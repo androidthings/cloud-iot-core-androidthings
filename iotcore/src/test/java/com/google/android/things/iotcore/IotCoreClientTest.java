@@ -297,6 +297,27 @@ public class IotCoreClientTest {
     }
 
     @Test
+    public void testOnCommandCallbackValidTopic() throws Exception {
+        MqttMessage mockMessage = mock(MqttMessage.class);
+        when(mockMessage.getPayload()).thenReturn(DATA);
+
+        mClientMqttCallback.messageArrived(PREFIX, mockMessage);
+
+        verify(mMockOnCommandExecutor).execute(any(Runnable.class));
+    }
+
+    @Test
+    public void testOnCommandCallbackValidTopicSerialExecutor() throws Exception {
+        setUpWithSerialExecutor();
+        MqttMessage mockMessage = mock(MqttMessage.class);
+        when(mockMessage.getPayload()).thenReturn(DATA);
+
+        mClientMqttCallback.messageArrived(PREFIX + "/subFolder", mockMessage);
+
+        verify(mMockOnCommandListener).onCommandReceived("/subFolder", DATA);
+    }
+
+    @Test
     public void testOnCallbackInvalidTopic() throws Exception {
         MqttMessage mockMessage = mock(MqttMessage.class);
         when(mockMessage.getPayload()).thenReturn(DATA);
@@ -455,6 +476,7 @@ public class IotCoreClientTest {
                 .setConnectionCallback(mMockConnectionCallbackExecutor, mMockConnectionCallback)
                 .setOnConfigurationListener(mMockOnConfigurationExecutor,
                         mMockOnConfigurationListener)
+                .setOnCommandListener(mMockOnCommandExecutor, mMockOnCommandListener)
                 .build();
     }
 
@@ -491,6 +513,7 @@ public class IotCoreClientTest {
                     .setConnectionParams(mMockConnectionParams)
                     .setTelemetryQueue(mMockTelemetryQueue)
                     .setOnConfigurationListener(mMockOnConfigurationListener)
+                    .setOnCommandListener(mMockOnCommandListener)
                     .setConnectionCallback(mMockConnectionCallback)
                     .build();
             fail("Built IotCoreClient without a key pair");
@@ -507,6 +530,7 @@ public class IotCoreClientTest {
                 .setKeyPair(mKeyPair)
                 .setConnectionCallback(mMockConnectionCallback)
                 .setOnConfigurationListener(mMockOnConfigurationListener)
+                .setOnCommandListener(mMockOnCommandListener)
                 .build();
     }
 
