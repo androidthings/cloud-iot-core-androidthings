@@ -59,6 +59,7 @@ import javax.net.ssl.SSLException;
 @RunWith(RobolectricTestRunner.class)
 public class IotCoreClientTest {
     private static final String TOPIC = "topic";
+    private static final String PREFIX = "prefix";
     private static final byte[] DATA = "Hello world".getBytes();
     private static final int QOS = TelemetryEvent.QOS_AT_LEAST_ONCE;
 
@@ -70,6 +71,9 @@ public class IotCoreClientTest {
     private final Executor mMockOnConfigurationExecutor = mock(Executor.class);
     private final OnConfigurationListener mMockOnConfigurationListener =
             mock(OnConfigurationListener.class);
+    private final Executor mMockOnCommandExecutor = mock(Executor.class);
+    private final OnCommandListener mMockOnCommandListener =
+            mock(OnCommandListener.class);
     private final Semaphore mMockSemaphore = mock(Semaphore.class);
     private final BoundedExponentialBackoff mMockBackoff = mock(BoundedExponentialBackoff.class);
     private final TelemetryEvent mMockTelemetryEvent = mock(TelemetryEvent.class);
@@ -107,6 +111,8 @@ public class IotCoreClientTest {
                 mMockConnectionCallback,
                 mMockOnConfigurationExecutor,
                 mMockOnConfigurationListener,
+                mMockOnCommandExecutor,
+                mMockOnCommandListener,
                 mMockSemaphore,
                 mMockBackoff,
                 mClientConnectionStateSpy);
@@ -132,6 +138,7 @@ public class IotCoreClientTest {
         when(mMockConnectionParams.getTelemetryTopic()).thenReturn(TOPIC);
         when(mMockConnectionParams.getDeviceStateTopic()).thenReturn(TOPIC);
         when(mMockConnectionParams.getConfigurationTopic()).thenReturn(TOPIC);
+        when(mMockConnectionParams.getCommandsTopicPrefix()).thenReturn(PREFIX);
         when(mMockConnectionParams.getBrokerUrl()).thenReturn("ssl://abc:123");
         when(mMockConnectionParams.getClientId()).thenReturn("id");
         when(mMockConnectionParams.getProjectId()).thenReturn("id");
@@ -152,6 +159,8 @@ public class IotCoreClientTest {
                 mMockConnectionCallback,
                 serialExecutor,
                 mMockOnConfigurationListener,
+                serialExecutor,
+                mMockOnCommandListener,
                 mMockSemaphore,
                 mMockBackoff,
                 mClientConnectionStateSpy);
@@ -288,13 +297,35 @@ public class IotCoreClientTest {
     }
 
     @Test
-    public void testOnConfigurationCallbackInvalidTopic() throws Exception {
+    public void testOnCommandCallbackValidTopic() throws Exception {
+        MqttMessage mockMessage = mock(MqttMessage.class);
+        when(mockMessage.getPayload()).thenReturn(DATA);
+
+        mClientMqttCallback.messageArrived(PREFIX, mockMessage);
+
+        verify(mMockOnCommandExecutor).execute(any(Runnable.class));
+    }
+
+    @Test
+    public void testOnCommandCallbackValidTopicSerialExecutor() throws Exception {
+        setUpWithSerialExecutor();
+        MqttMessage mockMessage = mock(MqttMessage.class);
+        when(mockMessage.getPayload()).thenReturn(DATA);
+
+        mClientMqttCallback.messageArrived(PREFIX + "/subFolder", mockMessage);
+
+        verify(mMockOnCommandListener).onCommandReceived("/subFolder", DATA);
+    }
+
+    @Test
+    public void testOnCallbackInvalidTopic() throws Exception {
         MqttMessage mockMessage = mock(MqttMessage.class);
         when(mockMessage.getPayload()).thenReturn(DATA);
 
         mClientMqttCallback.messageArrived("BAD_TOPIC", mockMessage);
 
         verify(mMockOnConfigurationExecutor, never()).execute(any(Runnable.class));
+        verify(mMockOnCommandExecutor, never()).execute(any(Runnable.class));
     }
 
     @Test
@@ -445,6 +476,7 @@ public class IotCoreClientTest {
                 .setConnectionCallback(mMockConnectionCallbackExecutor, mMockConnectionCallback)
                 .setOnConfigurationListener(mMockOnConfigurationExecutor,
                         mMockOnConfigurationListener)
+                .setOnCommandListener(mMockOnCommandExecutor, mMockOnCommandListener)
                 .build();
     }
 
@@ -481,6 +513,7 @@ public class IotCoreClientTest {
                     .setConnectionParams(mMockConnectionParams)
                     .setTelemetryQueue(mMockTelemetryQueue)
                     .setOnConfigurationListener(mMockOnConfigurationListener)
+                    .setOnCommandListener(mMockOnCommandListener)
                     .setConnectionCallback(mMockConnectionCallback)
                     .build();
             fail("Built IotCoreClient without a key pair");
@@ -497,6 +530,7 @@ public class IotCoreClientTest {
                 .setKeyPair(mKeyPair)
                 .setConnectionCallback(mMockConnectionCallback)
                 .setOnConfigurationListener(mMockOnConfigurationListener)
+                .setOnCommandListener(mMockOnCommandListener)
                 .build();
     }
 
