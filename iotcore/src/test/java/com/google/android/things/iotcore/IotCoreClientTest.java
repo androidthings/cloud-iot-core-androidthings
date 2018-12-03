@@ -59,7 +59,7 @@ import javax.net.ssl.SSLException;
 @RunWith(RobolectricTestRunner.class)
 public class IotCoreClientTest {
     private static final String TOPIC = "topic";
-    private static final String PREFIX = "prefix";
+    private static final String COMMAND = "command";
     private static final byte[] DATA = "Hello world".getBytes();
     private static final int QOS = TelemetryEvent.QOS_AT_LEAST_ONCE;
 
@@ -138,7 +138,7 @@ public class IotCoreClientTest {
         when(mMockConnectionParams.getTelemetryTopic()).thenReturn(TOPIC);
         when(mMockConnectionParams.getDeviceStateTopic()).thenReturn(TOPIC);
         when(mMockConnectionParams.getConfigurationTopic()).thenReturn(TOPIC);
-        when(mMockConnectionParams.getCommandsTopicPrefix()).thenReturn(PREFIX);
+        when(mMockConnectionParams.getCommandsTopic()).thenReturn(COMMAND);
         when(mMockConnectionParams.getBrokerUrl()).thenReturn("ssl://abc:123");
         when(mMockConnectionParams.getClientId()).thenReturn("id");
         when(mMockConnectionParams.getProjectId()).thenReturn("id");
@@ -301,7 +301,7 @@ public class IotCoreClientTest {
         MqttMessage mockMessage = mock(MqttMessage.class);
         when(mockMessage.getPayload()).thenReturn(DATA);
 
-        mClientMqttCallback.messageArrived(PREFIX, mockMessage);
+        mClientMqttCallback.messageArrived(COMMAND, mockMessage);
 
         verify(mMockOnCommandExecutor).execute(any(Runnable.class));
     }
@@ -312,7 +312,7 @@ public class IotCoreClientTest {
         MqttMessage mockMessage = mock(MqttMessage.class);
         when(mockMessage.getPayload()).thenReturn(DATA);
 
-        mClientMqttCallback.messageArrived(PREFIX + "/subFolder", mockMessage);
+        mClientMqttCallback.messageArrived(COMMAND + "/subFolder", mockMessage);
 
         verify(mMockOnCommandListener).onCommandReceived("/subFolder", DATA);
     }

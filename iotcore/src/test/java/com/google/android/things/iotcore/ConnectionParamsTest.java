@@ -251,6 +251,6 @@ public class ConnectionParamsTest {
         ConnectionParams connectionParams = buildAllParameters();
 
         String expectedCommandsTopicPrefix = "/devices/" + DEVICE_ID + "/commands";
-        assertThat(connectionParams.getCommandsTopicPrefix()).isEqualTo(expectedCommandsTopicPrefix);
+        assertThat(connectionParams.getCommandsTopic()).isEqualTo(expectedCommandsTopicPrefix);
     }
 }

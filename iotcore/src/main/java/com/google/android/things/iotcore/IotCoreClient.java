@@ -53,9 +53,10 @@ import javax.net.ssl.SSLException;
  *
  * <p>This class provides mechanisms for using Cloud IoT Core's main features. Namely
  * <ul>
- * <li>Publishing device telemetry</li>
- * <li>Publishing device state</li>
- * <li>Receiving configuration changes</li>
+ *    <li>Publishing device telemetry</li>
+ *    <li>Publishing device state</li>
+ *    <li>Receiving configuration changes</li>
+ *    <li>Receiving commands</li>
  * </ul>
  *
  * <p>Create a new IotCoreClient using the {@link IotCoreClient.Builder}, and call
@@ -80,6 +81,7 @@ import javax.net.ssl.SSLException;
  *             .setConnectionParams(connectionParams)
  *             .setKeyPair(keyPair);
  *             .setOnConfigurationListener(onConfigurationListener)
+ *             .setOnCommandListener(onCommandListener)
  *             .setConnectionCallback(connectionCallback)
  *             .build();
  *     iotCoreClient.connect();
@@ -230,6 +232,9 @@ public class IotCoreClient {
         if (onConfigurationListener != null && onConfigurationExecutor == null) {
             throw new IllegalArgumentException("No executor provided for configuration listener");
         }
+        if (onCommandListener!= null && onCommandExecutor == null) {
+            throw new IllegalArgumentException("No executor provided for command listener");
+        }
 
         mConnectionParams = configuration;
         mMqttClient = mqttClient;
@@ -246,11 +251,11 @@ public class IotCoreClient {
         mMqttClient.setCallback(
                 createMqttCallback(onConfigurationExecutor, onConfigurationListener, onCommandExecutor, onCommandListener));
 
-        // Always subscribe to the device configuration topic
-        mSubscriptionTopics.add(mConnectionParams.getConfigurationTopic());
-
-        if (onCommandListener != null && onCommandExecutor != null) {
-            mSubscriptionTopics.add(String.format(Locale.US, "%s/#", mConnectionParams.getCommandsTopicPrefix()));
+        if (onConfigurationListener != null) {
+            mSubscriptionTopics.add(mConnectionParams.getConfigurationTopic());
+        }
+        if (onCommandListener != null) {
+            mSubscriptionTopics.add(String.format(Locale.US, "%s/#", mConnectionParams.getCommandsTopic()));
         }
     }
 
@@ -408,12 +413,8 @@ public class IotCoreClient {
         }
 
         /**
-         * Add a listener to receive configuration changes sent to the device from Cloud IoT
+         * Add a listener to receive commands sent to the device from Cloud IoT
          * Core.
-         *
-         * <p>Cloud IoT Core resends device configuration every time the device connects to
-         * Cloud IoT Core, so clients should expect to receive the same configuration
-         * multiple times.
          *
          * <p>This parameter is optional.
          *
@@ -432,12 +433,8 @@ public class IotCoreClient {
         }
 
         /**
-         * Add a listener to receive configuration changes sent to the device from Cloud IoT
+         * Add a listener to receive commands sent to the device from Cloud IoT
          * Core.
-         *
-         * <p>Cloud IoT Core resends device configuration every time the device connects to
-         * Cloud IoT Core, so clients should expect to receive the same configuration
-         * multiple times.
          *
          * <p>This parameter is optional.
          *
@@ -551,24 +548,21 @@ public class IotCoreClient {
                                     onConfigurationListener.onConfigurationReceived(payload);
                                 }
                             });
-                } else {
-                    if (topic.startsWith(mConnectionParams.getCommandsTopicPrefix()) && onCommandListener != null && onCommandExecutor != null) {
+                } else if (topic.startsWith(mConnectionParams.getCommandsTopic()) && onCommandListener != null && onCommandExecutor != null) {
 
-                        // Call the client's OnCommandListener
-                        final byte[] payload = message.getPayload();
-                        final String subFolder = topic.replaceAll(mConnectionParams.getCommandsTopicPrefix(), "");
-                        onCommandExecutor.execute(
-                                new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        onCommandListener.onCommandReceived(subFolder, payload);
-                                    }
-                                });
-                    }
+                    // Call the client's OnCommandListener
+                    final byte[] payload = message.getPayload();
+                    final String subFolder = topic.replaceFirst(mConnectionParams.getCommandsTopic(), "");
+                    onCommandExecutor.execute(
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    onCommandListener.onCommandReceived(subFolder, payload);
+                                }
+                            });
                 }
-
-
             }
+
 
             @Override
             public void deliveryComplete(IMqttDeliveryToken token) {
@@ -769,8 +763,7 @@ public class IotCoreClient {
     /**
      * Determine appropriate error to return to client based on MqttException.
      */
-    private @ConnectionCallback.DisconnectReason
-    int getDisconnectionReason(
+    private @ConnectionCallback.DisconnectReason int getDisconnectionReason(
             MqttException mqttException) {
         switch (mqttException.getReasonCode()) {
             case MqttException.REASON_CODE_FAILED_AUTHENTICATION:
@@ -828,7 +821,7 @@ public class IotCoreClient {
         }
         mMqttClient.connect(configureConnectionOptions());
 
-        for (final String topic: mSubscriptionTopics) {
+        for (final String topic : mSubscriptionTopics) {
             mMqttClient.subscribe(topic);
         }
         onConnection();
