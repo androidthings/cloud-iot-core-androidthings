@@ -247,10 +247,10 @@ public class ConnectionParamsTest {
     }
 
     @Test
-    public void testGetCommandsTopicPrefix() {
+    public void testGetCommandsTopic() {
         ConnectionParams connectionParams = buildAllParameters();
 
-        String expectedCommandsTopicPrefix = "/devices/" + DEVICE_ID + "/commands";
-        assertThat(connectionParams.getCommandsTopic()).isEqualTo(expectedCommandsTopicPrefix);
+        String expectedCommandsTopic = "/devices/" + DEVICE_ID + "/commands";
+        assertThat(connectionParams.getCommandsTopic()).isEqualTo(expectedCommandsTopic);
     }
 }
