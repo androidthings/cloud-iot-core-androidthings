@@ -301,7 +301,7 @@ public class IotCoreClientTest {
         MqttMessage mockMessage = mock(MqttMessage.class);
         when(mockMessage.getPayload()).thenReturn(DATA);
 
-        mClientMqttCallback.messageArrived(COMMAND, mockMessage);
+        mClientMqttCallback.messageArrived(COMMAND + "/subFolder", mockMessage);
 
         verify(mMockOnCommandExecutor).execute(any(Runnable.class));
     }
@@ -314,7 +314,7 @@ public class IotCoreClientTest {
 
         mClientMqttCallback.messageArrived(COMMAND + "/subFolder", mockMessage);
 
-        verify(mMockOnCommandListener).onCommandReceived("/subFolder", DATA);
+        verify(mMockOnCommandListener).onCommandReceived("subFolder", DATA);
     }
 
     @Test

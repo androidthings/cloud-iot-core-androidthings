@@ -549,10 +549,11 @@ public class IotCoreClient {
                                 }
                             });
                 } else if (topic.startsWith(mConnectionParams.getCommandsTopic()) && onCommandListener != null && onCommandExecutor != null) {
-
                     // Call the client's OnCommandListener
+
                     final byte[] payload = message.getPayload();
-                    final String subFolder = topic.replaceFirst(mConnectionParams.getCommandsTopic(), "");
+                    final String prefix = mConnectionParams.getCommandsTopic() + "/";
+                    final String subFolder = topic.replaceFirst(prefix, "");
                     onCommandExecutor.execute(
                             new Runnable() {
                                 @Override
