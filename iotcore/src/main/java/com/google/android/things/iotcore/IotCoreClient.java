@@ -154,6 +154,9 @@ public class IotCoreClient {
     // Tracks exponential backoff interval
     private final BoundedExponentialBackoff mBackoff;
 
+    // Will be used to strip off the commands topic prefix
+    private final String mCommandsTopicPrefixRegex;
+
     // Throw an IllegalArgumentException if ref is null.
     private static void checkNotNull(Object ref, String name) {
         if (ref == null) {
@@ -197,6 +200,8 @@ public class IotCoreClient {
                         MAX_RETRY_INTERVAL_MS,
                         MAX_RETRY_JITTER_MS),
                 new AtomicBoolean(false));
+
+
     }
 
     @VisibleForTesting
@@ -247,6 +252,7 @@ public class IotCoreClient {
         mSemaphore = semaphore;
         mBackoff = backoff;
         mClientConnectionState = clientConnectionState;
+        mCommandsTopicPrefixRegex = String.format(Locale.US, "^%s/?", mConnectionParams.getCommandsTopic());
 
         mMqttClient.setCallback(
                 createMqttCallback(onConfigurationExecutor, onConfigurationListener, onCommandExecutor, onCommandListener));
@@ -552,8 +558,8 @@ public class IotCoreClient {
                     // Call the client's OnCommandListener
 
                     final byte[] payload = message.getPayload();
-                    final String prefix = mConnectionParams.getCommandsTopic() + "/";
-                    final String subFolder = topic.replaceFirst(prefix, "");
+
+                    final String subFolder = topic.replaceFirst(mCommandsTopicPrefixRegex, "");
                     onCommandExecutor.execute(
                             new Runnable() {
                                 @Override

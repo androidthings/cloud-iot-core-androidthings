@@ -318,6 +318,17 @@ public class IotCoreClientTest {
     }
 
     @Test
+    public void testOnCommandCallbackValidTopicNoSubFolderSerialExecutor() throws Exception {
+        setUpWithSerialExecutor();
+        MqttMessage mockMessage = mock(MqttMessage.class);
+        when(mockMessage.getPayload()).thenReturn(DATA);
+
+        mClientMqttCallback.messageArrived(COMMAND, mockMessage);
+
+        verify(mMockOnCommandListener).onCommandReceived("", DATA);
+    }
+
+    @Test
     public void testOnCallbackInvalidTopic() throws Exception {
         MqttMessage mockMessage = mock(MqttMessage.class);
         when(mockMessage.getPayload()).thenReturn(DATA);
