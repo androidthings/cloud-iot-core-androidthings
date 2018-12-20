@@ -245,4 +245,12 @@ public class ConnectionParamsTest {
         String expectedConfigurationTopic = "/devices/" + DEVICE_ID + "/config";
         assertThat(connectionParams.getConfigurationTopic()).isEqualTo(expectedConfigurationTopic);
     }
+
+    @Test
+    public void testGetCommandsTopic() {
+        ConnectionParams connectionParams = buildAllParameters();
+
+        String expectedCommandsTopic = "/devices/" + DEVICE_ID + "/commands";
+        assertThat(connectionParams.getCommandsTopic()).isEqualTo(expectedCommandsTopic);
+    }
 }
