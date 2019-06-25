@@ -23,7 +23,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /** Represents a telemetry event to publish to Cloud IoT Core. */
-public class TelemetryEvent {
+public class TopicEvent {
 
     private final String mTopicSubpath;
     private final byte[] mData;
@@ -41,14 +41,14 @@ public class TelemetryEvent {
     public static final int QOS_AT_LEAST_ONCE = 1;
 
     /**
-     * Constructs a new TelemetryEvent with the data to publish and an
+     * Constructs a new TopicEvent with the data to publish and an
      * optional topic subpath destination.
      *
      * @param data the telemetry event data to send to Cloud IoT Core
      * @param topicSubpath the subpath under "../device/../events/"
      * @param qos the quality of service to use when sending the message
      */
-    public TelemetryEvent(@NonNull byte[] data, @Nullable String topicSubpath, @Qos int qos) {
+    public TopicEvent(@NonNull byte[] data, @Nullable String topicSubpath, @Qos int qos) {
         if (qos != QOS_AT_MOST_ONCE && qos != QOS_AT_LEAST_ONCE) {
             throw new IllegalArgumentException("Invalid quality of service provided.");
         }

@@ -67,7 +67,7 @@ import javax.net.ssl.SSLException;
  * <p>Track the current connection using {@link IotCoreClient#isConnected()} or register a
  * {@link ConnectionCallback} to listen for changes in the client's conn, and publish data to Cloud
  *
- * <p>Publish data to Cloud IoT Core using {@link IotCoreClient#publishTelemetry(TelemetryEvent)}
+ * <p>Publish data to Cloud IoT Core using {@link IotCoreClient#publishTelemetry(TopicEvent)}
  * and {@link IotCoreClient#publishDeviceState(byte[])}. These methods can be used regardless of the
  * client's connection state. If the client is connected, messages are published immediately.
  * Otherwise, if the client is disconnected, messages are stored in memory and sent when the
@@ -128,7 +128,7 @@ public class IotCoreClient {
 
     // Store telemetry event that failed to send so it can be resent when connection to
     // Cloud IoT Core can be reestablished.
-    private TelemetryEvent mUnsentTelemetryEvent;
+    private TopicEvent mUnsentTelemetryTopicEvent;
 
     // Store device state.
     private final AtomicReference<byte[]> mUnsentDeviceState;
@@ -136,7 +136,7 @@ public class IotCoreClient {
     // Queue of unsent telemetry events.
     private final Object mQueueLock = new Object();
     @GuardedBy("mQueueLock")
-    private final Queue<TelemetryEvent> mTelemetryQueue;
+    private final Queue<TopicEvent> mTelemetryQueue;
 
     // Client callbacks.
     private final Executor mConnectionCallbackExecutor;
@@ -171,7 +171,7 @@ public class IotCoreClient {
             @NonNull ConnectionParams connectionParams,
             @NonNull KeyPair keyPair,
             @NonNull MqttClient mqttClient,
-            @NonNull Queue<TelemetryEvent> telemetryQueue,
+            @NonNull Queue<TopicEvent> telemetryQueue,
             @Nullable Executor connectionCallbackExecutor,
             @Nullable ConnectionCallback connectionCallback,
             @Nullable Executor onConfigurationExecutor,
@@ -211,7 +211,7 @@ public class IotCoreClient {
             @NonNull JwtGenerator jwtGenerator,
             @NonNull AtomicBoolean runBackgroundThread,
             @NonNull AtomicReference<byte[]> unsentDeviceState,
-            @NonNull Queue<TelemetryEvent> telemetryQueue,
+            @NonNull Queue<TopicEvent> telemetryQueue,
             @Nullable Executor connectionCallbackExecutor,
             @Nullable ConnectionCallback connectionCallback,
             @Nullable Executor onConfigurationExecutor,
@@ -271,7 +271,7 @@ public class IotCoreClient {
     public static class Builder {
         private ConnectionParams mConnectionParams;
         private KeyPair mKeyPair;
-        private Queue<TelemetryEvent> mTelemetryQueue;
+        private Queue<TopicEvent> mTelemetryQueue;
         private Executor mOnConfigurationExecutor;
         private OnConfigurationListener mOnConfigurationListener;
         private Executor mOnCommandExecutor;
@@ -335,7 +335,7 @@ public class IotCoreClient {
          * @return this builder
          */
         public Builder setTelemetryQueue(
-                @NonNull Queue<TelemetryEvent> telemetryQueue) {
+                @NonNull Queue<TopicEvent> telemetryQueue) {
             checkNotNull(telemetryQueue, "Telemetry queue");
             mTelemetryQueue = telemetryQueue;
             return this;
@@ -680,11 +680,11 @@ public class IotCoreClient {
     private void handleTelemetry() throws MqttException {
         // Only send events from the client's telemetry queue is there is not an unsent event
         // already.
-        if (mUnsentTelemetryEvent == null) {
+        if (mUnsentTelemetryTopicEvent == null) {
             synchronized (mQueueLock) {
-                mUnsentTelemetryEvent = mTelemetryQueue.poll();
+                mUnsentTelemetryTopicEvent = mTelemetryQueue.poll();
             }
-            if (mUnsentTelemetryEvent == null) {
+            if (mUnsentTelemetryTopicEvent == null) {
                 // Nothing to do
                 return;
             }
@@ -692,13 +692,13 @@ public class IotCoreClient {
 
         // Send the event. Could throw MqttException on error.
         publish(
-                mConnectionParams.getTelemetryTopic() + mUnsentTelemetryEvent.getTopicSubpath(),
-                mUnsentTelemetryEvent.getData(),
-                mUnsentTelemetryEvent.getQos());
-        Log.d(TAG, "Published telemetry event: " + new String(mUnsentTelemetryEvent.getData()));
+                mConnectionParams.getTelemetryTopic() + mUnsentTelemetryTopicEvent.getTopicSubpath(),
+                mUnsentTelemetryTopicEvent.getData(),
+                mUnsentTelemetryTopicEvent.getQos());
+        Log.d(TAG, "Published telemetry event: " + new String(mUnsentTelemetryTopicEvent.getData()));
 
         // Event sent successfully. Clear the cached event.
-        mUnsentTelemetryEvent = null;
+        mUnsentTelemetryTopicEvent = null;
     }
 
     // Publish data to topic.
@@ -953,7 +953,7 @@ public class IotCoreClient {
      * @return Returns true if the event was queued to send, or return false if the event could
      * not be queued
      */
-    public boolean publishTelemetry(@NonNull TelemetryEvent event) {
+    public boolean publishTelemetry(@NonNull TopicEvent event) {
         synchronized (mQueueLock) {
             int preOfferSize = mTelemetryQueue.size();
             if (!mTelemetryQueue.offer(event) || mTelemetryQueue.size() == preOfferSize) {

@@ -21,14 +21,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
-/** TelemetryEvent unit tests. */
+/** TopicEvent unit tests. */
 @RunWith(RobolectricTestRunner.class)
-public class TelemetryEventTest {
+public class TopicEventTest {
 
     @Test
     public void testGetData() {
         byte[] data = new byte[] {1};
-        TelemetryEvent event = new TelemetryEvent(data, null, TelemetryEvent.QOS_AT_MOST_ONCE);
+        TopicEvent event = new TopicEvent(data, null, TopicEvent.QOS_AT_MOST_ONCE);
         byte[] outData = event.getData();
 
         assertThat(outData.length).isEqualTo(data.length);
@@ -37,45 +37,45 @@ public class TelemetryEventTest {
 
     @Test
     public void testNullTopicSubpath() {
-        TelemetryEvent event = new TelemetryEvent(new byte[1], null,
-                TelemetryEvent.QOS_AT_MOST_ONCE);
+        TopicEvent event = new TopicEvent(new byte[1], null,
+                TopicEvent.QOS_AT_MOST_ONCE);
         assertThat(event.getTopicSubpath()).isEmpty();
     }
 
     @Test
     public void testNonNullTopicSubpathWithLeadingSlash() {
         String subpath = "/a/b/c";
-        TelemetryEvent event = new TelemetryEvent(new byte[1], subpath,
-                TelemetryEvent.QOS_AT_MOST_ONCE);
+        TopicEvent event = new TopicEvent(new byte[1], subpath,
+                TopicEvent.QOS_AT_MOST_ONCE);
         assertThat(event.getTopicSubpath()).isEqualTo(subpath);
     }
 
     @Test
     public void testNonNullTopicSubpathWithNoLeadingSlash() {
         String subpath = "a/b/c";
-        TelemetryEvent event = new TelemetryEvent(new byte[1], subpath,
-                TelemetryEvent.QOS_AT_MOST_ONCE);
+        TopicEvent event = new TopicEvent(new byte[1], subpath,
+                TopicEvent.QOS_AT_MOST_ONCE);
         assertThat(event.getTopicSubpath()).isEqualTo("/" + subpath);
     }
 
     @Test
     public void testGetQosAtMostOnce() {
-        TelemetryEvent event = new TelemetryEvent(new byte[1], null,
-                TelemetryEvent.QOS_AT_MOST_ONCE);
-        assertThat(event.getQos()).isEqualTo(TelemetryEvent.QOS_AT_MOST_ONCE);
+        TopicEvent event = new TopicEvent(new byte[1], null,
+                TopicEvent.QOS_AT_MOST_ONCE);
+        assertThat(event.getQos()).isEqualTo(TopicEvent.QOS_AT_MOST_ONCE);
     }
 
     @Test
     public void testGetQosAtLeastOnce() {
-        TelemetryEvent event = new TelemetryEvent(new byte[1], null,
-                TelemetryEvent.QOS_AT_LEAST_ONCE);
-        assertThat(event.getQos()).isEqualTo(TelemetryEvent.QOS_AT_LEAST_ONCE);
+        TopicEvent event = new TopicEvent(new byte[1], null,
+                TopicEvent.QOS_AT_LEAST_ONCE);
+        assertThat(event.getQos()).isEqualTo(TopicEvent.QOS_AT_LEAST_ONCE);
     }
 
     @Test
     public void testNegativeQosFails() {
         try {
-            new TelemetryEvent(new byte[1], null, -1);
+            new TopicEvent(new byte[1], null, -1);
             fail("Constructed telemetry event with negative QOS");
         } catch (IllegalArgumentException expected) {
             // Success
@@ -85,7 +85,7 @@ public class TelemetryEventTest {
     @Test
     public void testHighQosFails() {
         try {
-            new TelemetryEvent(new byte[1], null, 100);
+            new TopicEvent(new byte[1], null, 100);
             fail("Constructed telemetry event with invalid QOS");
         } catch (IllegalArgumentException expected) {
             // Success
