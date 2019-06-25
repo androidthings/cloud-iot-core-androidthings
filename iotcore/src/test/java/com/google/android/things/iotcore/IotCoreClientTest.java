@@ -16,20 +16,6 @@ package com.google.android.things.iotcore;
 
 import android.support.annotation.NonNull;
 
-import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
@@ -54,6 +40,20 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.net.ssl.SSLException;
+
+import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /** IotCoreClient unit tests. */
 @RunWith(RobolectricTestRunner.class)
@@ -83,6 +83,9 @@ public class IotCoreClientTest {
     @SuppressWarnings("unchecked")
     private final Queue<TopicEvent> mMockTelemetryQueue = mock(Queue.class);
 
+    @SuppressWarnings("unchecked")
+    private final Queue<TopicEvent> mMockPubSubTopicQueue = mock(Queue.class);
+
     // Cant mock methods in AtomicBoolean
     private AtomicBoolean mClientConnectionStateSpy;
     private AtomicBoolean mRunBackgroundThreadSpy;
@@ -107,6 +110,7 @@ public class IotCoreClientTest {
                 mRunBackgroundThreadSpy,
                 mUnsentDeviceStateSpy,
                 mMockTelemetryQueue,
+                mMockPubSubTopicQueue,
                 mMockConnectionCallbackExecutor,
                 mMockConnectionCallback,
                 mMockOnConfigurationExecutor,
@@ -155,6 +159,7 @@ public class IotCoreClientTest {
                 mRunBackgroundThreadSpy,
                 mUnsentDeviceStateSpy,
                 mMockTelemetryQueue,
+                mMockPubSubTopicQueue,
                 serialExecutor,
                 mMockConnectionCallback,
                 serialExecutor,

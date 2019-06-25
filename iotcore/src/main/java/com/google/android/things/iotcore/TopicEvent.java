@@ -25,6 +25,8 @@ import java.lang.annotation.RetentionPolicy;
 /** Represents a telemetry event to publish to Cloud IoT Core. */
 public class TopicEvent {
 
+    @Nullable
+    private final String mTopicName;
     private final String mTopicSubpath;
     private final byte[] mData;
     private final @Qos int mQos;
@@ -40,15 +42,20 @@ public class TopicEvent {
     /** At least once delivery. */
     public static final int QOS_AT_LEAST_ONCE = 1;
 
+    public TopicEvent(@NonNull byte[] data, @Nullable String topicSubpath, @Qos int qos) {
+        this(data, null, topicSubpath, qos);
+    }
+
     /**
      * Constructs a new TopicEvent with the data to publish and an
      * optional topic subpath destination.
      *
      * @param data the telemetry event data to send to Cloud IoT Core
+     * @param topicName PubSub Topic name, topic name is null when Event is telemetry event
      * @param topicSubpath the subpath under "../device/../events/"
      * @param qos the quality of service to use when sending the message
      */
-    public TopicEvent(@NonNull byte[] data, @Nullable String topicSubpath, @Qos int qos) {
+    public TopicEvent(@NonNull byte[] data, @Nullable String topicName, @Nullable String topicSubpath, @Qos int qos) {
         if (qos != QOS_AT_MOST_ONCE && qos != QOS_AT_LEAST_ONCE) {
             throw new IllegalArgumentException("Invalid quality of service provided.");
         }
@@ -61,6 +68,7 @@ public class TopicEvent {
         }
 
         mTopicSubpath = topicSubpath;
+        mTopicName = topicName;
         mData = data;
         mQos = qos;
     }
@@ -83,6 +91,16 @@ public class TopicEvent {
      */
     public String getTopicSubpath() {
         return mTopicSubpath;
+    }
+
+    /**
+     * Gets this event's topic name.
+     *
+     * @return this event's topic name
+     */
+    @Nullable
+    public String getTopicName() {
+        return mTopicName;
     }
 
     /**
