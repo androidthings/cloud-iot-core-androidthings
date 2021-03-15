@@ -9,7 +9,7 @@ android {
         versionCode 1
         versionName "1.0"
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 
     buildTypes {
@@ -33,14 +33,14 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    implementation 'com.android.support:support-annotations:28.0.0'
+    implementation 'androidx.annotation:annotation:1.0.0'
     testImplementation 'com.google.truth:truth:0.40'
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.mockito:mockito-core:2.18.0'
     testImplementation 'org.robolectric:robolectric:4.0'
     testImplementation 'io.jsonwebtoken:jjwt:0.9.0'
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0'
 
     // MQTT
     implementation('org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.0') {
