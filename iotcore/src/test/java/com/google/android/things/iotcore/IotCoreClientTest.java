@@ -14,7 +14,7 @@
 
 package com.google.android.things.iotcore;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;

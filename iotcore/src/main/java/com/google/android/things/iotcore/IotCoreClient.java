@@ -15,10 +15,10 @@
 package com.google.android.things.iotcore;
 
 import android.os.Process;
-import android.support.annotation.GuardedBy;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.GuardedBy;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 import android.util.Log;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
