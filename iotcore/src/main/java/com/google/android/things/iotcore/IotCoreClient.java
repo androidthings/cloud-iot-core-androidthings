@@ -21,19 +21,6 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.util.Log;
 
-import java.io.EOFException;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
-import java.security.KeyPair;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Queue;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
@@ -43,6 +30,22 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.jose4j.lang.JoseException;
 
+import java.io.EOFException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
+import java.security.KeyPair;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Queue;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
 import javax.net.ssl.SSLException;
 
 /**
@@ -50,9 +53,10 @@ import javax.net.ssl.SSLException;
  *
  * <p>This class provides mechanisms for using Cloud IoT Core's main features. Namely
  * <ul>
- *     <li>Publishing device telemetry</li>
- *     <li>Publishing device state</li>
- *     <li>Receiving configuration changes</li>
+ *    <li>Publishing device telemetry</li>
+ *    <li>Publishing device state</li>
+ *    <li>Receiving configuration changes</li>
+ *    <li>Receiving commands</li>
  * </ul>
  *
  * <p>Create a new IotCoreClient using the {@link IotCoreClient.Builder}, and call
@@ -77,6 +81,7 @@ import javax.net.ssl.SSLException;
  *             .setConnectionParams(connectionParams)
  *             .setKeyPair(keyPair);
  *             .setOnConfigurationListener(onConfigurationListener)
+ *             .setOnCommandListener(onCommandListener)
  *             .setConnectionCallback(connectionCallback)
  *             .build();
  *     iotCoreClient.connect();
@@ -116,6 +121,7 @@ public class IotCoreClient {
     // Underlying MQTT client implementation.
     private final MqttClient mMqttClient;
 
+    private final List<String> mSubscriptionTopics = new ArrayList<>(2);
     // Control the execution of the background thread. The thread stops if mRunBackgroundThread is
     // false.
     private final AtomicBoolean mRunBackgroundThread;
@@ -148,6 +154,9 @@ public class IotCoreClient {
     // Tracks exponential backoff interval
     private final BoundedExponentialBackoff mBackoff;
 
+    // Will be used to strip off the commands topic prefix
+    private final String mCommandsTopicPrefixRegex;
+
     // Throw an IllegalArgumentException if ref is null.
     private static void checkNotNull(Object ref, String name) {
         if (ref == null) {
@@ -155,7 +164,9 @@ public class IotCoreClient {
         }
     }
 
-    /** IotCoreClient constructor used by the Builder. */
+    /**
+     * IotCoreClient constructor used by the Builder.
+     */
     private IotCoreClient(
             @NonNull ConnectionParams connectionParams,
             @NonNull KeyPair keyPair,
@@ -164,7 +175,9 @@ public class IotCoreClient {
             @Nullable Executor connectionCallbackExecutor,
             @Nullable ConnectionCallback connectionCallback,
             @Nullable Executor onConfigurationExecutor,
-            @Nullable OnConfigurationListener onConfigurationListener) {
+            @Nullable OnConfigurationListener onConfigurationListener,
+            @Nullable Executor onCommandExecutor,
+            @Nullable OnCommandListener onCommandListener) {
         this(
                 connectionParams,
                 mqttClient,
@@ -179,12 +192,16 @@ public class IotCoreClient {
                 connectionCallback,
                 onConfigurationExecutor,
                 onConfigurationListener,
+                onCommandExecutor,
+                onCommandListener,
                 new Semaphore(0),
                 new BoundedExponentialBackoff(
                         INITIAL_RETRY_INTERVAL_MS,
                         MAX_RETRY_INTERVAL_MS,
                         MAX_RETRY_JITTER_MS),
                 new AtomicBoolean(false));
+
+
     }
 
     @VisibleForTesting
@@ -199,6 +216,8 @@ public class IotCoreClient {
             @Nullable ConnectionCallback connectionCallback,
             @Nullable Executor onConfigurationExecutor,
             @Nullable OnConfigurationListener onConfigurationListener,
+            @Nullable Executor onCommandExecutor,
+            @Nullable OnCommandListener onCommandListener,
             @NonNull Semaphore semaphore,
             @NonNull BoundedExponentialBackoff backoff,
             @NonNull AtomicBoolean clientConnectionState) {
@@ -218,6 +237,9 @@ public class IotCoreClient {
         if (onConfigurationListener != null && onConfigurationExecutor == null) {
             throw new IllegalArgumentException("No executor provided for configuration listener");
         }
+        if (onCommandListener!= null && onCommandExecutor == null) {
+            throw new IllegalArgumentException("No executor provided for command listener");
+        }
 
         mConnectionParams = configuration;
         mMqttClient = mqttClient;
@@ -230,18 +252,30 @@ public class IotCoreClient {
         mSemaphore = semaphore;
         mBackoff = backoff;
         mClientConnectionState = clientConnectionState;
+        mCommandsTopicPrefixRegex = String.format(Locale.US, "^%s/?", mConnectionParams.getCommandsTopic());
 
         mMqttClient.setCallback(
-                createMqttCallback(onConfigurationExecutor, onConfigurationListener));
+                createMqttCallback(onConfigurationExecutor, onConfigurationListener, onCommandExecutor, onCommandListener));
+
+        if (onConfigurationListener != null) {
+            mSubscriptionTopics.add(mConnectionParams.getConfigurationTopic());
+        }
+        if (onCommandListener != null) {
+            mSubscriptionTopics.add(String.format(Locale.US, "%s/#", mConnectionParams.getCommandsTopic()));
+        }
     }
 
-    /** Constructs IotCoreClient instances. */
+    /**
+     * Constructs IotCoreClient instances.
+     */
     public static class Builder {
         private ConnectionParams mConnectionParams;
         private KeyPair mKeyPair;
         private Queue<TelemetryEvent> mTelemetryQueue;
         private Executor mOnConfigurationExecutor;
         private OnConfigurationListener mOnConfigurationListener;
+        private Executor mOnCommandExecutor;
+        private OnCommandListener mOnCommandListener;
         private Executor mConnectionCallbackExecutor;
         private ConnectionCallback mConnectionCallback;
 
@@ -297,7 +331,7 @@ public class IotCoreClient {
          * IotCoreClient is constructed.
          *
          * @param telemetryQueue the queue this client should use for storing unpublished telemetry
-         *     events
+         *                       events
          * @return this builder
          */
         public Builder setTelemetryQueue(
@@ -385,6 +419,42 @@ public class IotCoreClient {
         }
 
         /**
+         * Add a listener to receive commands sent to the device from Cloud IoT
+         * Core.
+         *
+         * <p>This parameter is optional.
+         *
+         * @param executor the thread the callback should be executed on
+         * @param listener the listener to add
+         * @return this builder
+         */
+        public Builder setOnCommandListener(
+                @NonNull Executor executor, @NonNull OnCommandListener listener) {
+            checkNotNull(executor, "Executor for OnCommandListener");
+            checkNotNull(listener, "OnCommand listener");
+
+            mOnCommandExecutor = executor;
+            mOnCommandListener = listener;
+            return this;
+        }
+
+        /**
+         * Add a listener to receive commands sent to the device from Cloud IoT
+         * Core.
+         *
+         * <p>This parameter is optional.
+         *
+         * @param listener the listener to add
+         * @return this builder
+         */
+        public Builder setOnCommandListener(
+                @NonNull OnCommandListener listener) {
+            checkNotNull(listener, "OnCommand listener");
+            mOnCommandListener = listener;
+            return this;
+        }
+
+        /**
          * Construct a new IotCoreClient with the Builder's parameters.
          *
          * @return a new IotCoreClient instance
@@ -399,6 +469,9 @@ public class IotCoreClient {
             }
             if (mOnConfigurationListener != null && mOnConfigurationExecutor == null) {
                 mOnConfigurationExecutor = createDefaultExecutor();
+            }
+            if (mOnCommandListener != null && mOnCommandExecutor == null) {
+                mOnCommandExecutor = createDefaultExecutor();
             }
             if (mConnectionCallback != null && mConnectionCallbackExecutor == null) {
                 mConnectionCallbackExecutor = createDefaultExecutor();
@@ -439,7 +512,9 @@ public class IotCoreClient {
                     mConnectionCallbackExecutor,
                     mConnectionCallback,
                     mOnConfigurationExecutor,
-                    mOnConfigurationListener);
+                    mOnConfigurationListener,
+                    mOnCommandExecutor,
+                    mOnCommandListener);
         }
     }
 
@@ -449,7 +524,9 @@ public class IotCoreClient {
 
     private MqttCallback createMqttCallback(
             @Nullable final Executor onConfigurationExecutor,
-            @Nullable final OnConfigurationListener onConfigurationListener) {
+            @Nullable final OnConfigurationListener onConfigurationListener,
+            @Nullable final Executor onCommandExecutor,
+            @Nullable final OnCommandListener onCommandListener) {
         return new MqttCallback() {
             @Override
             public void connectionLost(Throwable cause) {
@@ -466,25 +543,37 @@ public class IotCoreClient {
 
             @Override
             public void messageArrived(String topic, MqttMessage message) {
-                if (!mConnectionParams.getConfigurationTopic().equals(topic)
-                        || onConfigurationListener == null
-                        || onConfigurationExecutor == null) {
-                    return;
-                }
+                if (mConnectionParams.getConfigurationTopic().equals(topic) && onConfigurationListener != null && onConfigurationExecutor != null) {
+                    // Call the client's OnConfigurationListener
 
-                // Call the client's OnConfigurationListener
-                final byte[] payload = message.getPayload();
-                onConfigurationExecutor.execute(
-                        new Runnable() {
-                            @Override
-                            public void run() {
-                                onConfigurationListener.onConfigurationReceived(payload);
-                            }
-                        });
+                    final byte[] payload = message.getPayload();
+                    onConfigurationExecutor.execute(
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    onConfigurationListener.onConfigurationReceived(payload);
+                                }
+                            });
+                } else if (topic.startsWith(mConnectionParams.getCommandsTopic()) && onCommandListener != null && onCommandExecutor != null) {
+                    // Call the client's OnCommandListener
+
+                    final byte[] payload = message.getPayload();
+
+                    final String subFolder = topic.replaceFirst(mCommandsTopicPrefixRegex, "");
+                    onCommandExecutor.execute(
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    onCommandListener.onCommandReceived(subFolder, payload);
+                                }
+                            });
+                }
             }
 
+
             @Override
-            public void deliveryComplete(IMqttDeliveryToken token) {}
+            public void deliveryComplete(IMqttDeliveryToken token) {
+            }
         };
     }
 
@@ -678,7 +767,9 @@ public class IotCoreClient {
         }
     }
 
-    /** Determine appropriate error to return to client based on MqttException. */
+    /**
+     * Determine appropriate error to return to client based on MqttException.
+     */
     private @ConnectionCallback.DisconnectReason int getDisconnectionReason(
             MqttException mqttException) {
         switch (mqttException.getReasonCode()) {
@@ -737,8 +828,9 @@ public class IotCoreClient {
         }
         mMqttClient.connect(configureConnectionOptions());
 
-        // Always subscribe to the device configuration topic
-        mMqttClient.subscribe(mConnectionParams.getConfigurationTopic());
+        for (final String topic : mSubscriptionTopics) {
+            mMqttClient.subscribe(topic);
+        }
         onConnection();
     }
 
@@ -859,7 +951,7 @@ public class IotCoreClient {
      *
      * @param event the telemetry event to publish
      * @return Returns true if the event was queued to send, or return false if the event could
-     *     not be queued
+     * not be queued
      */
     public boolean publishTelemetry(@NonNull TelemetryEvent event) {
         synchronized (mQueueLock) {
