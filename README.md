@@ -13,6 +13,10 @@ interactions with the Cloud IoT Core
 [MQTT bridge](https://cloud.google.com/iot/docs/how-tos/mqtt-bridge) so users don't have to worry
 about low-level networking protocols.
 
+> **Note:** The Android Things Console will be turned down for non-commercial
+> use on January 5, 2022. For more details, see the
+> [FAQ page](https://developer.android.com/things/faq).
+
 ## Getting started
 
 There are three steps to using this library: set up Cloud IoT Core, download the library, and then
